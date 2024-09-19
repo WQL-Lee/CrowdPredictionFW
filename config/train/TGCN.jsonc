@@ -1,0 +1,62 @@
+{
+    "name": "TGCN",
+    "n_gpu": 1,
+
+    "arch": {
+        "type": "TGCN",
+        "args": {
+            "adj_path": null,
+            "num_nodes": 20,
+            "hidden_dim": 128,
+            "output_dim": 1
+        }
+    },
+    "data_loader": {
+        "type": "CrowdDataLoader",
+        "args":{
+            "data_dir": "data/processed",
+            "batch_size": 32,
+            "n_his": 12,
+            "n_pred": 1,
+            "is_continous": false,
+            "dates_dist": [["20240607", "20240607"],["20240609", "20240610"],["20240612", "20240613"]],
+            "interval":5,
+            "shuffle": true,
+            "validation_split": 0.2,
+            "training": true
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.001
+        }
+    },
+    "loss": "mse_with_regularizer_loss",
+    "metrics": ["RMSE",
+        // "MAE",
+        // "Accuracy",
+        // "R2",
+        // "Explained_Variance"
+    ],
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 1000,
+            "gamma": 0.1
+        }
+    },
+    "trainer": {
+        "epochs": 200,
+        "save_dir": "TGCNSaved",
+        "save_period": 20,
+        "verbosity": 2,
+        "early_stop": 30,
+        "tensorboard": true
+    },
+
+    "result_info":{
+        "is_saved": true,
+        "saved_dir": "tgcn_result/train"
+    }
+}

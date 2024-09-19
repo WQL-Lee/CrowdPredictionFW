@@ -1,0 +1,44 @@
+{
+    "name": "CrowdCNNGRU",
+   
+    "saved_dir": "result/vis/CrowdCNNGRU",
+    "loss_metrics":{
+        "input_path": "result/train/_loss_metrics.json",
+        "saved_sub_dir":"loss_metrics",
+        "loss" : {
+            "dynamic" : false, 
+            "figsize" : [8,4],
+            "color": "black",
+            "linewidth": 2,
+            "dpi": 100
+
+        },
+        "metrics":{
+            "strategy": "all", // single or all
+
+            "color" : "red", 
+            "linewidth": 2,
+            "dpi": 100,
+            
+            // The following parameters are used for strategy "single"
+            "selected_keys": ["MAPE","MAE", "RMSE"],
+            "s_figsize": [8, 4],
+            // The following parameters are used for strategy "all"
+            "keys": ["MAPE","MAE", "RMSE", "MAPE2", "MAE2", "RMSE2"],
+            "ncols": 2,
+            "nrows": 3,
+            "power_limits": [1, 4],
+            "a_figsize": [8, 4]
+        }
+        
+        // other parameters, e.g. number of subplots, figure length or width
+    },
+    "tgt_pred":{
+        "input_path":  "result/pred/CrowdCNNGRU",
+        "saved_sub_dir": "tgt_pred",
+        "title": ["v51","v52","v53","v54","v55","v56", "v57", "v58", "v59", "v60", "v61", "v62", "v63", "v64", "v65", "v66", "v67", "v68", "v69", "v70", "v71", "v72", "v73","v74", "v75","v76"],
+        "figsize": [20,50],
+        "dpi": 100
+    }
+
+}

@@ -1,0 +1,21 @@
+{
+    "name": "CrowdCNNGRU",
+    "model_path": "LSaved/models/CrowdCNNGRU/0720_165914",
+    "saved_dir": "result/pred/CrowdCNNGRU",
+    "data_loader":{
+        "type": "CrowdDataLoader",
+        "args":{
+            "data_dir": "test_data",
+            "batch_size": 1,
+            "n_his": 12,
+            "n_pred": 12,
+            "is_continous": true,
+            "dates_dist": [["20211029","20211031"]],
+            "interval":5,
+            "shuffle": false,
+            "validation_split": 0,
+            "training": false
+        }
+    }
+
+}

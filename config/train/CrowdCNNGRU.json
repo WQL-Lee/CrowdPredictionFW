@@ -1,0 +1,78 @@
+{
+    "name": "CrowdCNNGRU",
+    "n_gpu": 1,
+
+    "arch": {
+        "type": "Crowd_CNN_GRU",
+        "args": {
+            "Kt": 3,
+            "his": 12,
+            "n_pred": 12,
+            "info_foresee": 12,
+            "n_vertex": 26,
+            "global_ch": [[1,16,16]],
+            "out_size": 1,
+            "temp_act_func": "GLU",
+            "block_act_func" : "relu",
+            "flight_cin": 20,
+            "flight_act_func": "relu",
+            "out_act_func": "GLU",
+            "dropout": 0,
+            "gru_layers": 1,
+            "gru_hidden": 80
+        }
+    },
+    "data_loader": {
+        "type": "CrowdDataLoader",
+        "args":{
+            "data_dir": "data/processed",
+            "batch_size": 50,
+            "n_his": 12,
+            "n_pred": 12,
+            "is_continous": false,
+            "dates_dist": [["20211003", "20211009"],["20211016","20211028"]],
+            "interval":5,
+            "shuffle": true,
+            "validation_split": 0,
+            "training": true
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.001,
+            "weight_decay": 0
+
+        }
+    },
+    "loss": "mse_loss",
+    "metrics": ["MAPE",
+        "MAE",
+        "RMSE",
+        "MAPE2",
+        "MAE2",
+        "RMSE2"
+    ],
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 1000,
+            "gamma": 0.1
+        }
+    },
+    "trainer": {
+        "epochs": 1000,
+        "save_dir": "LSaved",
+        "save_period": 1,
+        "verbosity": 2,
+        
+        "early_stop": 500,
+
+        "tensorboard": true
+    },
+
+    "result_info":{
+        "is_saved": true,
+        "saved_dir": "result/train"
+    }
+}

@@ -1,0 +1,39 @@
+{
+    "name": "TGCN",
+    "model_path": "TGCNSaved/models/TGCN/0914_104112",
+    "saved_dir": "tgcn_result/pred/TGCN",
+    "data_loader":{
+        "type": "CrowdDataLoader",
+        "args":{
+            "data_dir": "data/processed",
+            "batch_size": 1,
+            "n_his": 12,
+            "n_pred": 1,
+            "is_continous": true,
+            "dates_dist": [["20240607", "20240607"]],
+            "interval":5,
+            "shuffle": false,
+            "validation_split": 0,
+            "training": true
+        }
+    },
+    "loss": "mse_with_regularizer_loss",
+    "metrics": [
+        "MAE",
+        "R2",
+        "Explained_Variance"
+    ],
+    "trainer":{
+        "save_dir": "TGCNSaved",
+    },
+    "arch": {
+        "type": "TGCN",
+        "args": {
+            "adj_path": null,
+            "num_nodes": 20,
+            "hidden_dim": 128,
+            "output_dim": 1
+        }
+    },
+    "n_gpu": 1,
+}

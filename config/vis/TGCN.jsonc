@@ -1,0 +1,44 @@
+{
+    "name": "TGCN",
+   
+    "saved_dir": "tgcn_result/vis/TGCN",
+    "loss_metrics":{
+        "input_path": "tgcn_result/train/loss_metrics.json",
+        "saved_sub_dir":"loss_metrics",
+        "loss" : {
+            "dynamic" : false, 
+            "figsize" : [8,4],
+            "color": "black",
+            "linewidth": 2,
+            "dpi": 100
+
+        },
+        "metrics":{
+            "strategy": "all", // single or all
+
+            "color" : "red", 
+            "linewidth": 2,
+            "dpi": 100,
+            
+            // The following parameters are used for strategy "single"
+            "selected_keys": ["RMSE"],
+            "s_figsize": [8, 4],
+            // The following parameters are used for strategy "all"
+            "keys": ["RMSE","RMSE","RMSE","RMSE"],
+            "ncols": 2,
+            "nrows": 2,
+            "power_limits": [1, 4],
+            "a_figsize": [8, 4]
+        }
+        
+        // other parameters, e.g. number of subplots, figure length or width
+    },
+    "tgt_pred":{
+        "input_path":  "tgcn_result/pred/TGCN",
+        "saved_sub_dir": "tgt_pred",
+        "title": ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10","v11","v12","v13","v14","v15","v16","v17","v18","v19","v20"],
+        "figsize": [20,50],
+        "dpi": 100
+    }
+
+}
