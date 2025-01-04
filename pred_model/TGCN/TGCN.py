@@ -117,7 +117,7 @@ class TGCN(nn.Module):
         self.name = "TGCN"
     
     def load_adj(self, adj_path):
-        adj = pd.DataFrame(np.eye(20))
+        adj = pd.DataFrame(np.eye(10))
         adj = np.mat(adj)
         return adj
 

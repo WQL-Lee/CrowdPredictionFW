@@ -57,7 +57,14 @@ def RMSE(outputs, targets):
 def MAE(outputs, targets):
     return torchmetrics.functional.mean_absolute_error(outputs, targets)
 
+def MAPE(outputs, targets):
+    return torchmetrics.functional.mean_absolute_percentage_error(outputs, targets)
+    # return torchmetrics.functional.mean_absolute_error(outputs, targets)
+
+
 def Accuracy(outputs, targets):
+    outputs=outputs.squeeze(0)
+    targets = targets.squeeze(0)
     return 1 - torch.linalg.norm(targets - outputs, "fro") / torch.linalg.norm(targets, "fro")
 
 def R2(outputs,targets):

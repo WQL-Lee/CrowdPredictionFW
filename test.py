@@ -87,7 +87,7 @@ class Inference:
                 targets = targets* max_value
                 tmp['target']=targets.cpu().detach().numpy().tolist()
                 tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
-                tmp['time_stamp'] = timestamp[:-3]
+                tmp['time_stamp'] = timestamp[:-1]
                 # tmp['flight'] = flight[:,-1:,:,:]
                 output_dict[batch_idx]=tmp.copy()
                 # computing loss, metrics on test set
@@ -101,8 +101,6 @@ class Inference:
 
     
         
-    
-
 
 def main(config):
     logger = config.get_logger('test')

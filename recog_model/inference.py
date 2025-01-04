@@ -12,6 +12,8 @@ from pathlib import Path
 import json
 
 import inferenceMP
+
+import inferenceFIDTM
 import sys
 sys.path.append('.')
 from utils import read_json, get_subdirectories
@@ -39,6 +41,8 @@ class RecongitionModel:
             pred_dmap, pred_count =inferenceMP.predict(model, img_path, config_mp["device"], config_mp["unit_size"],config_mp["patch_size"], config_mp["log_para"])
             
             return pred_count, confidence
+        elif self.model_name == "FIDTM":
+            config_fidtm = self.config_model
         else:
             print(f"The model {self.model_name} has not been defined!")
             exit(-1)

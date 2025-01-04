@@ -1,16 +1,16 @@
 {
     "name": "TGCN",
-    "model_path": "TGCNSaved/models/TGCN/0914_104112",
-    "saved_dir": "tgcn_result/pred/TGCN",
+    "model_path": "LSavedNew/TGCN/models/TGCN/1008_125005",
+    "saved_dir": "temp_tgcn_result/pred/TGCN_n",
     "data_loader":{
         "type": "CrowdDataLoader",
         "args":{
-            "data_dir": "data/processed",
+            "data_dir": "data/processed/FIDTM_n",
             "batch_size": 1,
             "n_his": 12,
-            "n_pred": 1,
+            "n_pred": 9,
             "is_continous": true,
-            "dates_dist": [["20240607", "20240607"]],
+            "dates_dist": [["20240620", "20240620"]],
             "interval":5,
             "shuffle": false,
             "validation_split": 0,
@@ -19,20 +19,23 @@
     },
     "loss": "mse_with_regularizer_loss",
     "metrics": [
+        "RMSE",
         "MAE",
+        "MAPE",
+        "Accuracy",
         "R2",
         "Explained_Variance"
     ],
     "trainer":{
-        "save_dir": "TGCNSaved",
+        "save_dir": "TGCNSavedNew/TGCN_n",
     },
     "arch": {
         "type": "TGCN",
         "args": {
             "adj_path": null,
-            "num_nodes": 20,
-            "hidden_dim": 128,
-            "output_dim": 1
+            "num_nodes": 10,
+            "hidden_dim": 256,
+            "output_dim": 9
         }
     },
     "n_gpu": 1,

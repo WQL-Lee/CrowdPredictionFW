@@ -179,7 +179,7 @@ class Visualize:
         fig.suptitle(fig_title, fontsize=20, fontweight='bold', y= 1.03)  # 大标题加粗
         
         # 添加额外的文本在大标题下面
-        fig.text(0.5, 1.005, extra_text, ha='center', fontsize=12, color='gray')  # 额外的文本放在大标题下
+        # fig.text(0.5, 1.005, extra_text, ha='center', fontsize=12, color='gray')  # 额外的文本放在大标题下
         
         # 调整子图和标题之间的距离
         # fig.subplots_adjust(top=0.95)  # 通过调整 top 参数，增加大标题与子图的距离

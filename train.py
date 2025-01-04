@@ -7,7 +7,7 @@ import data_loader.data_loaders as module_data
 # import model.metric as module_metric
 # import model.model as module_arch
 # import pred_model.structure.CrowdCNNGRU as module_arch
-import pred_model.TGCN.TGCN as module_arch
+import pred_model.MTGCN.TGCN as module_arch
 import pred_model.loss as module_loss
 import pred_model.metric as module_metric
 from parse_config import ConfigParser
@@ -60,7 +60,7 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default= "config/train/TGCN.jsonc", type=str,
+    args.add_argument('-c', '--config', default= "config/train/MTGCN.jsonc", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')

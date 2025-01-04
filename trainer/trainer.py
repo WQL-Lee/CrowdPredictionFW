@@ -146,14 +146,16 @@ class Trainer(BaseTrainer):
 
         self.model.train()
         self.train_metrics.reset()
-        for batch_idx, (his_data, targets, _) in enumerate(self.data_loader):
+        for batch_idx, (his_data, targets, flight_data, _) in enumerate(self.data_loader):
             his_data = his_data/max_value
             targets = targets/max_value
+            flight_data = flight_data/ max_value
             his_data = his_data.to(self.device)
             targets = targets.to(self.device)
+            flight_data = flight_data.to(self.device)
 
             self.optimizer.zero_grad()
-            outputs = self.model(his_data)
+            outputs = self.model(his_data, flight_data)
             loss = self.criterion(outputs, targets, self.model)
 
             loss.backward()
@@ -189,6 +191,67 @@ class Trainer(BaseTrainer):
         #     self.lr_scheduler.step()
 
         return log
+    
+    def train_cosine_tgcn(self, epoch):
+        """
+        Training logic for an epoch
+
+        :param epoch: Integer, current training epoch.
+        :return: A log that contains average loss and metric in this epoch.
+        """
+
+        ## handling the max_value, which is used for normlization
+        max_value = self.data_loader.dataset.terminal_max
+
+        self.model.train()
+        self.train_metrics.reset()
+        for batch_idx, (his_data, targets, flight_data, _) in enumerate(self.data_loader):
+            his_data = his_data/max_value
+            targets = targets/max_value
+            flight_data = flight_data/ max_value
+            his_data = his_data.to(self.device)
+            targets = targets.to(self.device)
+            flight_data = flight_data.to(self.device)
+
+            self.optimizer.zero_grad()
+            
+            outputs = self.model(his_data, flight_data)
+            loss = self.criterion(outputs, targets, self.model)
+
+            loss.backward()
+            self.optimizer.step()
+
+            self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
+            self.train_metrics.update('loss', loss.item())
+            for met in self.metric_ftns:
+                met_value=met(outputs, targets).cpu().item() * max_value
+                self.train_metrics.update(met.__name__,  met_value)
+
+            if batch_idx % self.log_step == 0:
+                self.logger.debug('Train Epoch: {} {} learning rate:{} Loss: {:.6f}'.format(
+                    epoch,
+                    self._progress(batch_idx),
+                    self.optimizer.state_dict()['param_groups'][0]['lr'],
+                    loss.item()))
+                # self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
+
+            if self.lr_scheduler is not None:
+                self.lr_scheduler.step()
+
+            if batch_idx == self.len_epoch:
+                break
+        
+        log = self.train_metrics.result()
+
+        if self.do_validation:
+            val_log = self._valid_epoch(epoch)
+            log.update(**{'val_'+k : v for k, v in val_log.items()})
+        #
+        # if self.lr_scheduler is not None:
+        #     self.lr_scheduler.step()
+
+        return log
+    
     
     def valid_tgcn(self, epoch):
         """

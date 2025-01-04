@@ -12,6 +12,6 @@ class CrowdDataLoader(BaseDataLoader):
         # super(CrowdDataLoader, self).__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
 
         # test TerminalDataset
-        self.dataset = TerminalDataset(self.data_dir,n_his, n_pred, is_continous, dates_dist, interval)
+        self.dataset = TerminalFlightDataset(self.data_dir,n_his, n_pred, is_continous, dates_dist, interval)
         super(CrowdDataLoader, self).__init__(self.dataset, batch_size, shuffle, validation_split, num_workers)
 

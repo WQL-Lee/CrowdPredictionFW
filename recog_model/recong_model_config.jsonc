@@ -2,16 +2,20 @@
     "name": "Recognize_Crowd",
     "crowd_model":{
         "MPCount":{
-            "pretrained": "recog_model/pretrained/sta.pth",
+            "pretrained": "recog_model/pretrained/MPCount/sta.pth",
             "visualize": true,
 
             "unit_size": 16, // "Unit size for image resizing. Normally set to 16 and no need to change."
             "patch_size": 3584, // "Patch size for image division. Decrease this value if OOM occurs."
             "log_para": 1000, // "Parameter for log transformation. Normally set to 1000 and no need to change."
             "device": "cuda" //"Device to run the model. Default is cuda."
+        },
+        "FIDTM":{
+            "pretrained": "recog_model/pretrained/FIDTM/model_best_nwpu.pth",
+            "device": "cuda"
         }
     },
     "input_dir": "data/mid_dtest/terminal_image_frames",
-    "saved_dir": "data/processed",
-    "vis_dir": "vis/_dtest"
+    "saved_dir": "data/processed/FIDTM_n",
+    "vis_dir": "vis/FIDTM_n"
 }
