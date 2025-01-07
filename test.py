@@ -8,7 +8,8 @@ import re
 
 import data_loader.data_loaders as module_data
 # import pred_model.structure.CrowdCNNGRU as module_arch
-import pred_model.TGCN.TGCN as module_arch
+# import pred_model.TGCN.TGCN as module_arch
+import pred_model.A3TGCN.A3TGCN as module_arch
 import pred_model.loss as module_loss
 import pred_model.metric as module_metric
 from parse_config import ConfigParser
@@ -29,6 +30,8 @@ class Inference:
             total_loss, total_metrics, output_dict = self.test_crowd_cnn_gru()
         elif self.model_name == "TGCN":
             total_loss, total_metrics, output_dict = self.test_tgcn()
+        elif self.model_name == "A3TGCN":
+            total_loss, total_metrics, output_dict = self.test_a3tgcn()
         else:
             print("The model has not been specified!")
             exit(-1)
@@ -85,6 +88,57 @@ class Inference:
 
                 outputs = outputs * max_value
                 targets = targets* max_value
+                tmp['target']=targets.cpu().detach().numpy().tolist()
+                tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
+                tmp['time_stamp'] = timestamp[:-1]
+                # tmp['flight'] = flight[:,-1:,:,:]
+                output_dict[batch_idx]=tmp.copy()
+                # computing loss, metrics on test set
+                loss = self.loss_fn(outputs, targets, self.model)
+                batch_size = targets.shape[0]
+                total_loss += loss.item() * batch_size
+
+                for i,met in enumerate(self.metric_fns):
+                    total_metrics[i] += met(outputs, targets).cpu().detach().numpy()
+        return total_loss, total_metrics, output_dict
+    
+    def test_a3tgcn(self):
+        total_loss = 0.0
+        total_metrics = torch.zeros(len(self.metric_fns))
+        output_dict= {}
+        device = self.device
+        max_value = self.data_loader.dataset.terminal_max
+        num_nodes = self.model.num_nodes
+        n_his = self.data_loader.dataset.n_his
+        edge_index = self.model.edge_index
+
+
+        with torch.no_grad():
+            for batch_idx, (his_data, targets, flight_data, timestamp) in enumerate(self.data_loader):
+                tmp={}
+
+                flight = flight_data.unsqueeze(1)
+                flight = flight.unsqueeze(3)
+                flight = flight.repeat(1,num_nodes, 1, n_his)
+                inputs = torch.concat((his_data, flight), 2)
+
+                # inputs = his_data
+
+                inputs = inputs/max_value
+                targets = targets/max_value
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                edge_index = edge_index.to(self.device)
+                # his_data = his_data/max_value
+                # targets = targets/max_value
+                # his_data = his_data.to(device)
+                # targets = targets.to(device)
+
+                outputs = self.model(inputs, edge_index)
+
+                outputs = outputs * max_value
+                targets = targets* max_value
+
                 tmp['target']=targets.cpu().detach().numpy().tolist()
                 tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
                 tmp['time_stamp'] = timestamp[:-1]
@@ -159,7 +213,7 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default="config/test/TGCN.jsonc", type=str,
+    args.add_argument('-c', '--config', default="config/test/A3TGCN.jsonc", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')

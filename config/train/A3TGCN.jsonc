@@ -1,14 +1,15 @@
 {
-    "name": "TGCN",
+    "name": "A3TGCN",
     "n_gpu": 1,
 
     "arch": {
-        "type": "TGCN",
+        "type": "A3TGCN",
         "args": {
+            "node_features": 7,
+            "hidden_dim": 64,
+            "output_dim": 6,
             "adj_path": "data/temp/adj.csv",
-            "num_nodes": 10,
-            "hidden_dim": 256,
-            "output_dim": 6
+            "batch_size": 32
         }
     },
     "data_loader": {
@@ -48,7 +49,7 @@
     },
     "trainer": {
         "epochs": 100,
-        "save_dir": "LSaved/TGCN",
+        "save_dir": "LSaved/A3TGCNTer",
         "save_period": 10,
         "verbosity": 2,
         "early_stop": 20,
@@ -57,6 +58,6 @@
 
     "result_info":{
         "is_saved": true,
-        "saved_dir": "result/TGCN/train"
+        "saved_dir": "result/A3TGCNTer/train"
     }
 }

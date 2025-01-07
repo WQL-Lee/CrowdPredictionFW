@@ -1,9 +1,9 @@
 {
-    "name": "TGCN",
+    "name": "A3TGCN",
    
-    "saved_dir": "result/TGCN/vis",
+    "saved_dir": "result/A3TGCNTer/vis",
     "loss_metrics":{
-        "input_path": "result/TGCN/train/loss_metrics.json",
+        "input_path": "result/A3TGCNTer/train/loss_metrics.json",
         "saved_sub_dir":"loss_metrics",
         "loss" : {
             "dynamic" : false, 
@@ -34,7 +34,7 @@
         // other parameters, e.g. number of subplots, figure length or width
     },
     "tgt_pred":{
-        "input_path":  "result/TGCN/pred",
+        "input_path":  "result/A3TGCNTer/pred",
         "saved_sub_dir": "tgt_pred",
         "title": ["v1","v2","v3","v4","v5","v6","v7","v8","v9","v10"],
         "figsize": [20,50],

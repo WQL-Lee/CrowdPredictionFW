@@ -1,7 +1,7 @@
 {
-    "name": "TGCN",
-    "model_path": "LSaved/TGCN/models/TGCN/0105_172117",
-    "saved_dir": "result/TGCN/pred",
+    "name": "A3TGCN",
+    "model_path": "LSaved/A3TGCNTer/models/A3TGCN/0107_124642",
+    "saved_dir": "result/A3TGCNTer/pred",
     "data_loader":{
         "type": "CrowdDataLoader",
         "args":{
@@ -27,15 +27,16 @@
         "Explained_Variance"
     ],
     "trainer":{
-        "save_dir": "LSaved/TGCN",
+        "save_dir": "LSaved/A3TGCNTer",
     },
     "arch": {
-        "type": "TGCN",
+        "type": "A3TGCN",
         "args": {
+            "node_features": 7,
+            "hidden_dim": 64,
+            "output_dim": 6,
             "adj_path": "data/temp/adj.csv",
-            "num_nodes": 10,
-            "hidden_dim": 256,
-            "output_dim": 6
+            "batch_size": 1
         }
     },
     "n_gpu": 1,

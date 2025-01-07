@@ -130,10 +130,23 @@ class Visualize:
                 # target[i] = np.array(data['target'])[0,-4,:,:].squeeze()
                 # pred[i] = np.array(data['prediction'])[0,-4, :, :].squeeze()
 
+                if self.name == "A3TGCN": 
+                    for j in range(num_areas):
 
-                ## TGCN vis
-                target[i] = np.array(data['target'][0][0])
-                pred[i] = np.array(data['prediction'][0][0])
+                        ## A3TGCN vis
+                        target[i][j] = data['target'][0][j][0]
+                        pred[i][j] = data['prediction'][0][j][0]
+                else:
+                    target[i] = data['target'][0][0]
+                    pred[i] = data['prediction'][0][0]
+
+            import torch
+            gt = torch.Tensor(target)
+            pd = torch.Tensor(pred)
+            acc = 1 - torch.linalg.norm(gt - pd, "fro") / torch.linalg.norm(gt, "fro")
+            print(acc)
+
+
 
             input_filename = os.path.basename(filepath)
             filename_wo_ext, _ = os.path.splitext(input_filename)

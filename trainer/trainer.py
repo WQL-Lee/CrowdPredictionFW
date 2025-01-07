@@ -146,16 +146,14 @@ class Trainer(BaseTrainer):
 
         self.model.train()
         self.train_metrics.reset()
-        for batch_idx, (his_data, targets, flight_data, _) in enumerate(self.data_loader):
+        for batch_idx, (his_data, targets, _) in enumerate(self.data_loader):
             his_data = his_data/max_value
             targets = targets/max_value
-            flight_data = flight_data/ max_value
             his_data = his_data.to(self.device)
             targets = targets.to(self.device)
-            flight_data = flight_data.to(self.device)
 
             self.optimizer.zero_grad()
-            outputs = self.model(his_data, flight_data)
+            outputs = self.model(his_data)
             loss = self.criterion(outputs, targets, self.model)
 
             loss.backward()
@@ -192,7 +190,8 @@ class Trainer(BaseTrainer):
 
         return log
     
-    def train_cosine_tgcn(self, epoch):
+
+    def train_a3tgcn(self, epoch):
         """
         Training logic for an epoch
 
@@ -202,20 +201,27 @@ class Trainer(BaseTrainer):
 
         ## handling the max_value, which is used for normlization
         max_value = self.data_loader.dataset.terminal_max
+        num_nodes = self.model.num_nodes
+        n_his = self.data_loader.dataset.n_his
+        edge_index = self.model.edge_index
 
         self.model.train()
         self.train_metrics.reset()
         for batch_idx, (his_data, targets, flight_data, _) in enumerate(self.data_loader):
-            his_data = his_data/max_value
+            flight = flight_data.unsqueeze(1)
+            flight = flight.unsqueeze(3)
+            flight = flight.repeat(1,num_nodes, 1, n_his)
+            inputs = torch.concat((his_data, flight), 2)
+            # inputs = his_data
+
+            inputs = inputs/max_value
             targets = targets/max_value
-            flight_data = flight_data/ max_value
-            his_data = his_data.to(self.device)
+            inputs = inputs.to(self.device)
             targets = targets.to(self.device)
-            flight_data = flight_data.to(self.device)
+            edge_index = edge_index.to(self.device)
 
             self.optimizer.zero_grad()
-            
-            outputs = self.model(his_data, flight_data)
+            outputs = self.model(inputs, edge_index)
             loss = self.criterion(outputs, targets, self.model)
 
             loss.backward()
@@ -250,8 +256,57 @@ class Trainer(BaseTrainer):
         # if self.lr_scheduler is not None:
         #     self.lr_scheduler.step()
 
-        return log
+        return log  
     
+    def valid_a3tgcn(self, epoch):
+        """
+        Validate after training an epoch
+
+        :param epoch: Integer, current training epoch.
+        :return: A log that contains information about validation
+        """
+        ## handling the max_value, which is used for normlization
+        max_value = self.data_loader.dataset.terminal_max
+        num_nodes = self.model.num_nodes
+        n_his = self.data_loader.dataset.n_his
+        edge_index = self.model.edge_index
+
+
+        self.model.eval()
+        self.valid_metrics.reset()
+        with torch.no_grad():
+            for batch_idx, (his_data, targets,flight_data, _) in enumerate(self.valid_data_loader):
+
+                flight = flight_data.unsqueeze(1)
+                flight = flight.unsqueeze(3)
+                flight = flight.repeat(1,num_nodes, 1, n_his)
+                inputs = torch.concat((his_data, flight), 2)
+                # inputs = his_data
+
+                inputs = inputs/max_value
+                targets = targets/max_value
+                inputs = inputs.to(self.device)
+                targets = targets.to(self.device)
+                edge_index = edge_index.to(self.device)
+
+
+                # his_data = his_data/ max_value
+                # targets = targets/ max_value
+                # his_data, targets = his_data.to(self.device), targets.to(self.device)
+
+                outputs = self.model(inputs, edge_index)
+                loss = self.criterion(outputs, targets, self.model)
+
+                self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
+                self.valid_metrics.update('loss', loss.item())
+                for met in self.metric_ftns:
+                    met_value = met(outputs, targets).cpu().item() * max_value
+                    self.valid_metrics.update(met.__name__, met_value)   
+
+        # # add histogram of model parameters to the tensorboard
+        # for name, p in self.model.named_parameters():
+        #     self.writer.add_histogram(name, p, bins='auto')
+        return self.valid_metrics.result()
     
     def valid_tgcn(self, epoch):
         """
@@ -299,6 +354,11 @@ class Trainer(BaseTrainer):
             log = self.train_tgcn(epoch)
             end = time.time()
             print(f"Epoch {epoch}: Time cost: {end-start}s")
+        elif self.model_name == "A3TGCN":
+            start = time.time()
+            log = self.train_a3tgcn(epoch)
+            end = time.time()
+            print(f"Epoch {epoch}: Time cost: {end-start}s")
         else:
             print("The training model has not specified!")
             exit(-1)
@@ -307,6 +367,8 @@ class Trainer(BaseTrainer):
     def _valid_epoch(self, epoch):
         if self.model_name == "TGCN":
             val_log = self.valid_tgcn(epoch)
+        elif self.model_name == "A3TGCN":
+            val_log = self.valid_a3tgcn(epoch)
         else:
             print("The training model has not specified!")
             exit(-1)

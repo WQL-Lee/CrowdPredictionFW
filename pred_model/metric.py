@@ -55,6 +55,8 @@ def RMSE(outputs, targets):
     # return torch.sqrt(torchmetrics.functional.mean_squared_error(outputs, targets))
 
 def MAE(outputs, targets):
+    outputs = outputs.reshape(-1)
+    targets = targets.reshape(-1)
     return torchmetrics.functional.mean_absolute_error(outputs, targets)
 
 def MAPE(outputs, targets):
