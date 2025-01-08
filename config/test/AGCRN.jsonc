@@ -1,7 +1,7 @@
 {
-    "name": "A3TGCN",
-    "model_path": "LSaved/A3TGCNTer/models/A3TGCN/0107_132925",
-    "saved_dir": "result/A3TGCNTer/pred",
+    "name": "AGCRN",
+    "model_path": "LSaved/AGCRN/models/AGCRN/0108_141419",
+    "saved_dir": "result/AGCRN/pred",
     "data_loader":{
         "type": "CrowdDataLoader",
         "args":{
@@ -27,16 +27,20 @@
         "Explained_Variance"
     ],
     "trainer":{
-        "save_dir": "LSaved/A3TGCNTer",
+        "save_dir": "LSaved/AGCRN",
     },
     "arch": {
-        "type": "A3TGCN",
+        "type": "AGCRN",
         "args": {
-            "node_features": 7,
+            "num_nodes":10, 
+            "input_dim": 7, 
             "hidden_dim": 64,
-            "output_dim": 6,
-            "adj_path": "data/temp/adj.csv",
-            "batch_size": 1
+            "output_dim": 1, 
+            "cheb_k": 2, 
+            "embed_dim": 2, 
+            "horizon": 6, // 即输出序列长度
+            "num_layers": 2, 
+            "default_graph": true
         }
     },
     "n_gpu": 1,

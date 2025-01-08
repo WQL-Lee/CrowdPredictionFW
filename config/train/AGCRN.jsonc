@@ -1,0 +1,66 @@
+{
+    "name": "AGCRN",
+    "n_gpu": 1,
+
+    "arch": {
+        "type": "AGCRN",
+        "args": {
+            "num_nodes":10, 
+            "input_dim": 7, 
+            "hidden_dim": 64,
+            "output_dim": 1, 
+            "cheb_k": 2, 
+            "embed_dim": 2, 
+            "horizon": 6, // 即输出序列长度
+            "num_layers": 2, 
+            "default_graph": true
+        }
+    },
+    "data_loader": {
+        "type": "CrowdDataLoader",
+        "args":{
+            "data_dir": "data/temp",
+            "batch_size": 32,
+            "n_his": 12,
+            "n_pred": 6,
+            "is_continous": true,
+            "dates_dist": [["20240609", "20240618"]],
+            "interval":5,
+            "shuffle": true,
+            "validation_split": 0.2,
+            "training": true
+        }
+    },
+    "optimizer": {
+        "type": "Adam",
+        "args":{
+            "lr": 0.0001
+        }
+    },
+    "loss": "mse_with_regularizer_loss",
+    "metrics": ["RMSE",
+        "MAE",
+        "R2",
+        "Explained_Variance"
+    ],
+    "lr_scheduler": {
+        "type": "StepLR",
+        "args": {
+            "step_size": 1000,
+            "gamma": 0.1
+        }
+    },
+    "trainer": {
+        "epochs": 100,
+        "save_dir": "LSaved/AGCRN",
+        "save_period": 10,
+        "verbosity": 2,
+        "early_stop": 20,
+        "tensorboard": true
+    },
+
+    "result_info":{
+        "is_saved": true,
+        "saved_dir": "result/AGCRN/train"
+    }
+}

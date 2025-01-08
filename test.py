@@ -9,7 +9,8 @@ import re
 import data_loader.data_loaders as module_data
 # import pred_model.structure.CrowdCNNGRU as module_arch
 # import pred_model.TGCN.TGCN as module_arch
-import pred_model.A3TGCN.A3TGCN as module_arch
+# import pred_model.A3TGCN.A3TGCN as module_arch
+import pred_model.AGCRN.AGCRN as module_arch
 import pred_model.loss as module_loss
 import pred_model.metric as module_metric
 from parse_config import ConfigParser
@@ -32,6 +33,8 @@ class Inference:
             total_loss, total_metrics, output_dict = self.test_tgcn()
         elif self.model_name == "A3TGCN":
             total_loss, total_metrics, output_dict = self.test_a3tgcn()
+        elif self.model_name == "AGCRN":
+            total_loss, total_metrics, output_dict = self.test_agcrn()
         else:
             print("The model has not been specified!")
             exit(-1)
@@ -152,6 +155,60 @@ class Inference:
                 for i,met in enumerate(self.metric_fns):
                     total_metrics[i] += met(outputs, targets).cpu().detach().numpy()
         return total_loss, total_metrics, output_dict
+    
+    def test_agcrn(self):
+        total_loss = 0.0
+        total_metrics = torch.zeros(len(self.metric_fns))
+        output_dict= {}
+        device = self.device
+        max_value = self.data_loader.dataset.terminal_max
+        num_nodes = self.model.num_node
+        n_his = self.data_loader.dataset.n_his
+
+        with torch.no_grad():
+            for batch_idx, (his_data, targets, flight_data, timestamp) in enumerate(self.data_loader):
+                tmp={}
+
+                flight = flight_data.unsqueeze(1)
+                flight = flight.unsqueeze(3)
+                flight = flight.repeat(1,num_nodes, 1, n_his)
+                inputs = torch.concat((his_data, flight), 2)
+                
+                # inputs = his_data
+
+                inputs = inputs/max_value
+                targets = targets/max_value
+                inputs = inputs.to(device)
+                targets = targets.to(device)
+                inputs = inputs.permute(0, 3, 1, 2)
+                targets = targets.unsqueeze(3)
+                targets = targets.permute(0, 2, 1, 3)
+
+                outputs = self.model(inputs)
+
+                outputs = outputs * max_value # (B, T, N, 1)
+                targets = targets* max_value # (B, T, N, 1)
+                
+                outputs = outputs.reshape(-1, outputs.shape[2], 1) # (B*T, N, 1)
+                targets = targets.reshape(-1, targets.shape[2], 1) # (B*T, N, 1)
+
+                outputs = outputs.squeeze(-1) #(B*T, N)
+                targets = targets.squeeze(-1) # (B*T, N)
+
+                tmp['target']=targets.cpu().detach().numpy().tolist()
+                tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
+                tmp['time_stamp'] = timestamp[:-1]
+                # tmp['flight'] = flight[:,-1:,:,:]
+                output_dict[batch_idx]=tmp.copy()
+                # computing loss, metrics on test set
+                loss = self.loss_fn(outputs, targets, self.model)
+                batch_size = targets.shape[0]
+                total_loss += loss.item() * batch_size
+
+                for i,met in enumerate(self.metric_fns):
+                    total_metrics[i] += met(outputs, targets).cpu().detach().numpy()
+        return total_loss, total_metrics, output_dict
+
 
     
         
@@ -213,7 +270,7 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default="config/test/A3TGCN.jsonc", type=str,
+    args.add_argument('-c', '--config', default="config/test/AGCRN.jsonc", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')
