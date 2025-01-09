@@ -24,23 +24,35 @@ class ConfigParser:
 
         # set save_dir where trained model and log will be saved.
         save_dir = Path(self.config['trainer']['save_dir'])
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
 
         exper_name = self.config['name']
         if run_id is None: # use timestamp as default run-id
             run_id = datetime.now().strftime(r'%m%d_%H%M%S')
-        self._save_dir = save_dir / 'models' / exper_name / run_id
-        self._log_dir = save_dir / 'log' / exper_name / run_id
-
-        # make directory for saving checkpoints and log.
-        exist_ok = run_id == ''
-        self.save_dir.mkdir(parents=True, exist_ok=exist_ok)
-        self.log_dir.mkdir(parents=True, exist_ok=exist_ok)
-
+        
+        debug = self._config["DEBUG"]
+        if debug:
+            self._save_dir = save_dir/'cache'/'models'
+            self._log_dir = save_dir/'cache'/'log'
+            exist_ok = ''
+        else :
+            self._save_dir = save_dir / 'models'/run_id
+            self._log_dir = save_dir / 'log' /run_id
+            # make directory for saving checkpoints and log.
+            exist_ok = run_id == ''
+        
+        if not os.path.exists(os.path.dirname(self.save_dir)):
+            os.makedirs(self.save_dir, exist_ok=exist_ok)
+        if not os.path.exists(os.path.dirname(self.log_dir)):
+            os.makedirs(self.log_dir, exist_ok=exist_ok)
+        # self.save_dir.makedirs(parents=True, exist_ok=exist_ok)
+        # self.log_dir.makedirs(parents=True, exist_ok=exist_ok)
         # save updated config file to the checkpoint dir
         write_json(self.config, self.save_dir / 'config.json')
 
         # configure logging module
-        setup_logging(self.log_dir)
+        setup_logging(debug, self.log_dir)
         self.log_levels = {
             0: logging.WARNING,
             1: logging.INFO,

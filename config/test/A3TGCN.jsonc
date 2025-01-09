@@ -1,9 +1,10 @@
 {
     "name": "A3TGCN",
-    "model_path": "LSaved/A3TGCNTer/models/A3TGCN/0107_132925",
-    "saved_dir": "result/A3TGCNTer/pred",
+    "DEBUG": true,
+    "model_path": "LSaved/A3TGCN/cache/models",
+    "saved_dir": "result/A3TGCN/pred",
     "data_loader":{
-        "type": "CrowdDataLoader",
+        "type": "TerminalFlightMixDataLoader",
         "args":{
             "data_dir": "data/temp",
             "batch_size": 1,
@@ -12,6 +13,7 @@
             "is_continous": true,
             "dates_dist": [["20240619", "20240620"]],
             "interval":5,
+            "normalizer": "std",
             "shuffle": false,
             "validation_split": 0,
             "training": true
@@ -27,7 +29,7 @@
         "Explained_Variance"
     ],
     "trainer":{
-        "save_dir": "LSaved/A3TGCNTer",
+        "save_dir": "LSaved/A3TGCN",
     },
     "arch": {
         "type": "A3TGCN",

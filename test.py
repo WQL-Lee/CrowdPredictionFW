@@ -9,8 +9,8 @@ import re
 import data_loader.data_loaders as module_data
 # import pred_model.structure.CrowdCNNGRU as module_arch
 # import pred_model.TGCN.TGCN as module_arch
-# import pred_model.A3TGCN.A3TGCN as module_arch
-import pred_model.AGCRN.AGCRN as module_arch
+import pred_model.A3TGCN.A3TGCN as module_arch
+# import pred_model.AGCRN.AGCRN as module_arch
 import pred_model.loss as module_loss
 import pred_model.metric as module_metric
 from parse_config import ConfigParser
@@ -78,19 +78,38 @@ class Inference:
         total_metrics = torch.zeros(len(self.metric_fns))
         output_dict= {}
         device = self.device
-        max_value = self.data_loader.dataset.terminal_max
+        scaler = self.data_loader.dataset.scaler
         with torch.no_grad():
-            for batch_idx, (his_data, targets, timestamp) in enumerate(self.data_loader):
+            for batch_idx, (inputs, targets, timestamp) in enumerate(self.data_loader):
                 tmp={}
-                his_data = his_data/max_value
-                targets = targets/max_value
-                his_data = his_data.to(device)
+                
+                inputs = inputs[..., 0]
+                targets = targets[..., 0]
+                inputs = inputs.to(device)
                 targets = targets.to(device)
 
-                outputs = self.model(his_data)
+                outputs = self.model(inputs)
 
-                outputs = outputs * max_value
-                targets = targets* max_value
+                # outputs = outputs * max_value # (B, T, N, 1)
+                # targets = targets* max_value # (B, T, N, 1)
+                targets = scaler.inverse_transform(targets)
+                outputs = scaler.inverse_transform(outputs)
+                
+                outputs = outputs.reshape(-1, outputs.shape[2], 1) # (B*T, N, 1)
+                targets = targets.reshape(-1, targets.shape[2], 1) # (B*T, N, 1)
+
+                outputs = outputs.squeeze(-1) #(B*T, N)
+                targets = targets.squeeze(-1) # (B*T, N)
+
+                # his_data = his_data/max_value
+                # targets = targets/max_value
+                # his_data = his_data.to(device)
+                # targets = targets.to(device)
+
+                # outputs = self.model(his_data)
+
+                # outputs = outputs * max_value
+                # targets = targets* max_value
                 tmp['target']=targets.cpu().detach().numpy().tolist()
                 tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
                 tmp['time_stamp'] = timestamp[:-1]
@@ -109,38 +128,37 @@ class Inference:
         total_loss = 0.0
         total_metrics = torch.zeros(len(self.metric_fns))
         output_dict= {}
-        device = self.device
-        max_value = self.data_loader.dataset.terminal_max
-        num_nodes = self.model.num_nodes
-        n_his = self.data_loader.dataset.n_his
+
         edge_index = self.model.edge_index
+        scaler = self.data_loader.dataset.scaler
 
 
         with torch.no_grad():
-            for batch_idx, (his_data, targets, flight_data, timestamp) in enumerate(self.data_loader):
+            for batch_idx, (inputs, targets,timestamp) in enumerate(self.data_loader):
                 tmp={}
 
-                flight = flight_data.unsqueeze(1)
-                flight = flight.unsqueeze(3)
-                flight = flight.repeat(1,num_nodes, 1, n_his)
-                inputs = torch.concat((his_data, flight), 2)
-
-                # inputs = his_data
-
-                inputs = inputs/max_value
-                targets = targets/max_value
+                inputs = inputs.permute(0,2,3,1)
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
                 edge_index = edge_index.to(self.device)
-                # his_data = his_data/max_value
-                # targets = targets/max_value
-                # his_data = his_data.to(device)
-                # targets = targets.to(device)
+
+                outputs = self.model(inputs, edge_index) # outputs: (batch_sz, num_node, n_pred)
+                outputs = outputs.unsqueeze(3)
+                outputs = outputs.permute(0,2,1,3)
 
                 outputs = self.model(inputs, edge_index)
+                outputs = outputs.unsqueeze(3)
+                outputs = outputs.permute(0,2,1,3)
 
-                outputs = outputs * max_value
-                targets = targets* max_value
+                targets = scaler.inverse_transform(targets)
+                outputs = scaler.inverse_transform(outputs)
+
+                outputs = outputs.reshape(-1, outputs.shape[2], 1) # (B*T, N, 1)
+                targets = targets.reshape(-1, targets.shape[2], 1) # (B*T, N, 1)
+
+                outputs = outputs.squeeze(-1) #(B*T, N)
+                targets = targets.squeeze(-1) # (B*T, N)
+
 
                 tmp['target']=targets.cpu().detach().numpy().tolist()
                 tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
@@ -161,33 +179,38 @@ class Inference:
         total_metrics = torch.zeros(len(self.metric_fns))
         output_dict= {}
         device = self.device
-        max_value = self.data_loader.dataset.terminal_max
-        num_nodes = self.model.num_node
-        n_his = self.data_loader.dataset.n_his
+        scaler = self.data_loader.dataset.scaler
 
         with torch.no_grad():
-            for batch_idx, (his_data, targets, flight_data, timestamp) in enumerate(self.data_loader):
+            for batch_idx, (inputs, targets,timestamp) in enumerate(self.data_loader):
                 tmp={}
 
-                flight = flight_data.unsqueeze(1)
-                flight = flight.unsqueeze(3)
-                flight = flight.repeat(1,num_nodes, 1, n_his)
-                inputs = torch.concat((his_data, flight), 2)
+                # flight = flight_data.unsqueeze(1)
+                # flight = flight.unsqueeze(3)
+                # flight = flight.repeat(1,num_nodes, 1, n_his)
+                # inputs = torch.concat((his_data, flight), 2)
                 
-                # inputs = his_data
+                # # inputs = his_data
 
-                inputs = inputs/max_value
-                targets = targets/max_value
+                # inputs = inputs/max_value
+                # targets = targets/max_value
+                # inputs = inputs.to(device)
+                # targets = targets.to(device)
+                # inputs = inputs.permute(0, 3, 1, 2)
+                # targets = targets.unsqueeze(3)
+                # targets = targets.permute(0, 2, 1, 3)
+
+                # inputs = inputs/max_value
+                # targets = targets/max_value
                 inputs = inputs.to(device)
                 targets = targets.to(device)
-                inputs = inputs.permute(0, 3, 1, 2)
-                targets = targets.unsqueeze(3)
-                targets = targets.permute(0, 2, 1, 3)
 
                 outputs = self.model(inputs)
 
-                outputs = outputs * max_value # (B, T, N, 1)
-                targets = targets* max_value # (B, T, N, 1)
+                # outputs = outputs * max_value # (B, T, N, 1)
+                # targets = targets* max_value # (B, T, N, 1)
+                targets = scaler.inverse_transform(targets)
+                outputs = scaler.inverse_transform(outputs)
                 
                 outputs = outputs.reshape(-1, outputs.shape[2], 1) # (B*T, N, 1)
                 targets = targets.reshape(-1, targets.shape[2], 1) # (B*T, N, 1)
@@ -270,7 +293,7 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default="config/test/AGCRN.jsonc", type=str,
+    args.add_argument('-c', '--config', default="config/test/A3TGCN.jsonc", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')

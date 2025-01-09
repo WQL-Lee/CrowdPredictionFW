@@ -6,7 +6,7 @@ from utils import inf_loop, MetricTracker
 import time
 
 
-class AGCRNTrainer(BaseTrainer):
+class TGCNTrainer(BaseTrainer):
     """
     Trainer class
     """
@@ -46,16 +46,16 @@ class AGCRNTrainer(BaseTrainer):
         self.train_metrics.reset()
         for batch_idx, (inputs, targets, _) in enumerate(self.data_loader):
             # inputs = his_data
+            inputs = inputs[...,0]
+            targets = targets[..., 0]
 
-            # inputs = inputs/max_value
-            # targets = targets/max_value
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
 
             self.optimizer.zero_grad()
             outputs = self.model(inputs)
 
-            loss = self.criterion(outputs, targets)
+            loss = self.criterion(outputs, targets, self.model)
 
             loss.backward()
             self.optimizer.step()
@@ -104,13 +104,16 @@ class AGCRNTrainer(BaseTrainer):
         self.valid_metrics.reset()
         with torch.no_grad():
             for batch_idx, (inputs, targets, _) in enumerate(self.valid_data_loader):
+                
+                inputs = inputs[...,0]
+                targets = targets[..., 0]
 
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
 
                 outputs = self.model(inputs)
                 # targets = self.scaler.inverse_transform(targets)
-                loss = self.criterion(outputs, targets)
+                loss = self.criterion(outputs, targets, self.model)
 
                 self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
                 self.valid_metrics.update('loss', loss.item())

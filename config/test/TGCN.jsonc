@@ -1,9 +1,10 @@
 {
     "name": "TGCN",
-    "model_path": "LSaved/TGCN/models/TGCN/0105_172117",
+    "DEBUG": true,
+    "model_path": "LSaved/TGCN/cache/models",
     "saved_dir": "result/TGCN/pred",
     "data_loader":{
-        "type": "CrowdDataLoader",
+        "type": "TerminalDataLoader",
         "args":{
             "data_dir": "data/temp",
             "batch_size": 1,
@@ -12,6 +13,7 @@
             "is_continous": true,
             "dates_dist": [["20240619", "20240620"]],
             "interval":5,
+            "normalizer": "std",
             "shuffle": false,
             "validation_split": 0,
             "training": true

@@ -130,18 +130,15 @@ class Visualize:
                 # target[i] = np.array(data['target'])[0,-4,:,:].squeeze()
                 # pred[i] = np.array(data['prediction'])[0,-4, :, :].squeeze()
 
-                if self.name == "A3TGCN": 
-                    for j in range(num_areas):
+                # if self.name == "A3TGCN": 
+                #     for j in range(num_areas):
 
-                        ## A3TGCN vis
-                        target[i][j] = data['target'][0][j][0]
-                        pred[i][j] = data['prediction'][0][j][0]
-                elif self.name == "AGCRN":
-                    target[i] = data['target'][0]
-                    pred[i] = data['prediction'][0]
-                else:
-                    target[i] = data['target'][0][0]
-                    pred[i] = data['prediction'][0][0]
+                #         ## A3TGCN vis
+                #         target[i][j] = data['target'][0][j][0]
+                #         pred[i][j] = data['prediction'][0][j][0]
+                # elif self.name == "AGCRN":
+                target[i] = data['target'][0]
+                pred[i] = data['prediction'][0]
 
             import torch
             gt = torch.Tensor(target)
@@ -227,7 +224,7 @@ class Visualize:
         plt.close()
 
 if __name__=="__main__":
-    visualize = Visualize("config/vis/AGCRN.jsonc")
+    visualize = Visualize("config/vis/A3TGCN.jsonc")
     visualize.tgt_pred_vis()
     visualize.loss_vis()
     visualize.metrics_vis()

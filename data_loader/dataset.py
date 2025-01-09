@@ -707,47 +707,6 @@ class TerminalFlightSimDataset(Dataset):
         
         return filtered_dates
     
-    # def __getitem__(self, index):
-    #     index = self.reindex(index, self.timestamp_dist)
-    #     timestamp_list = list()
-    #     # [index, index+1, ..., index + self.his -1]
-    #     his_count = list()
-    #     h_index = index
-        
-    #     for _ in range(self.n_his):
-    #         ter_timestamp = self.terminal_data.loc[h_index,"timestamp"]
-    #         ter_timestamp = ter_timestamp.strftime('%Y%m%d%H%M')
-    #         timestamp_list.append(ter_timestamp)
-    #         his_count.append(np.array(list(self.terminal_data.iloc[h_index,1:])))
-    #         h_index += 1
-
-    #     p_index = h_index+1
-    #     target_count = list()
-    #     for _ in range(self.n_pred):
-            
-    #         ter_timestamp = self.terminal_data.loc[p_index,"timestamp"]
-    #         ter_timestamp = ter_timestamp.strftime('%Y%m%d%H%M')
-    #         timestamp_list.append(ter_timestamp)
-    #         target_count.append(np.array(list(self.terminal_data.iloc[p_index,1:])))
-    #         p_index += 1
-        
-    #     # 记录航班信息，从预测值处开始记录
-    #     f_index = h_index+ 1
-    #     flight_count = list()
-    #     for _ in range(self.n_pred):
-    #         ter_timestamp = self.terminal_data.loc[f_index,"timestamp"]
-    #         ter_timestamp = ter_timestamp.strftime('%Y%m%d%H%M')
-    #         flight_count.append(self.flight_data.loc[ter_timestamp, "passengers"])
-    #         f_index += 1
-    #     his_count = Tensor(np.array(his_count))
-    #     target_count = Tensor(np.array(target_count))
-    #     flight_count = Tensor(np.array(flight_count))
-    #     return his_count, target_count, flight_count, timestamp_list
-
-    # def __len__(self):
-    #     records = self.terminal_data.shape[0]
-    #     num_discontinuous= len(self.dates_dist) 
-    #     return records - num_discontinuous*(self.n_his+self.n_pred-1)
     
     def get_index_data(self, index):
         timestamp_list = list()

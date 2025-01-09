@@ -1,6 +1,7 @@
 {
     "name": "TGCN",
     "n_gpu": 1,
+    "DEBUG": true,
 
     "arch": {
         "type": "TGCN",
@@ -12,7 +13,7 @@
         }
     },
     "data_loader": {
-        "type": "CrowdDataLoader",
+        "type": "TerminalDataLoader",
         "args":{
             "data_dir": "data/temp",
             "batch_size": 32,
@@ -21,6 +22,7 @@
             "is_continous": true,
             "dates_dist": [["20240609", "20240618"]],
             "interval":5,
+            "normalizer": "std",
             "shuffle": true,
             "validation_split": 0.2,
             "training": true
@@ -29,7 +31,7 @@
     "optimizer": {
         "type": "Adam",
         "args":{
-            "lr": 0.0001
+            "lr": 0.001
         }
     },
     "loss": "mse_with_regularizer_loss",

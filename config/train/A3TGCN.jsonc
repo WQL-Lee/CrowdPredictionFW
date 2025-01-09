@@ -1,6 +1,7 @@
 {
     "name": "A3TGCN",
     "n_gpu": 1,
+    "DEBUG": true,
 
     "arch": {
         "type": "A3TGCN",
@@ -13,7 +14,7 @@
         }
     },
     "data_loader": {
-        "type": "CrowdDataLoader",
+        "type": "TerminalFlightMixDataLoader",
         "args":{
             "data_dir": "data/temp",
             "batch_size": 32,
@@ -22,6 +23,7 @@
             "is_continous": true,
             "dates_dist": [["20240609", "20240618"]],
             "interval":5,
+            "normalizer": "std",
             "shuffle": true,
             "validation_split": 0.2,
             "training": true
@@ -30,7 +32,7 @@
     "optimizer": {
         "type": "Adam",
         "args":{
-            "lr": 0.0001
+            "lr": 0.001
         }
     },
     "loss": "mse_with_regularizer_loss",
@@ -49,7 +51,7 @@
     },
     "trainer": {
         "epochs": 100,
-        "save_dir": "LSaved/A3TGCNTer",
+        "save_dir": "LSaved/A3TGCN",
         "save_period": 10,
         "verbosity": 2,
         "early_stop": 20,
@@ -58,6 +60,6 @@
 
     "result_info":{
         "is_saved": true,
-        "saved_dir": "result/A3TGCNTer/train"
+        "saved_dir": "result/A3TGCN/train"
     }
 }

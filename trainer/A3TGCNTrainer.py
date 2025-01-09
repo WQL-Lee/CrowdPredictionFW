@@ -6,7 +6,7 @@ from utils import inf_loop, MetricTracker
 import time
 
 
-class AGCRNTrainer(BaseTrainer):
+class A3TGCNTrainer(BaseTrainer):
     """
     Trainer class
     """
@@ -44,18 +44,25 @@ class AGCRNTrainer(BaseTrainer):
 
         self.model.train()
         self.train_metrics.reset()
+        edge_index = self.model.edge_index
+
         for batch_idx, (inputs, targets, _) in enumerate(self.data_loader):
             # inputs = his_data
 
             # inputs = inputs/max_value
             # targets = targets/max_value
+            inputs = inputs.permute(0,2,3,1)
+
             inputs = inputs.to(self.device)
             targets = targets.to(self.device)
+            edge_index = edge_index.to(self.device)
 
             self.optimizer.zero_grad()
-            outputs = self.model(inputs)
+            outputs = self.model(inputs, edge_index) # outputs: (batch_sz, num_node, n_pred)
+            outputs = outputs.unsqueeze(3)
+            outputs = outputs.permute(0,2,1,3)
 
-            loss = self.criterion(outputs, targets)
+            loss = self.criterion(outputs, targets,self.model)
 
             loss.backward()
             self.optimizer.step()
@@ -102,15 +109,23 @@ class AGCRNTrainer(BaseTrainer):
 
         self.model.eval()
         self.valid_metrics.reset()
+        edge_index = self.model.edge_index
+
         with torch.no_grad():
             for batch_idx, (inputs, targets, _) in enumerate(self.valid_data_loader):
 
+                inputs = inputs.permute(0,2,3,1)
+
                 inputs = inputs.to(self.device)
                 targets = targets.to(self.device)
+                edge_index = edge_index.to(self.device)
 
-                outputs = self.model(inputs)
+                outputs = self.model(inputs, edge_index) # outputs: (batch_sz, num_node, n_pred)
+                outputs = outputs.unsqueeze(3)
+                outputs = outputs.permute(0,2,1,3)
+
                 # targets = self.scaler.inverse_transform(targets)
-                loss = self.criterion(outputs, targets)
+                loss = self.criterion(outputs, targets, self.model)
 
                 self.writer.set_step((epoch - 1) * len(self.valid_data_loader) + batch_idx, 'valid')
                 self.valid_metrics.update('loss', loss.item())

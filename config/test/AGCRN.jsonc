@@ -1,9 +1,9 @@
 {
     "name": "AGCRN",
-    "model_path": "LSaved/AGCRN/models/AGCRN/0108_141419",
+    "model_path": "LSaved/AGCRN/models/AGCRN/0109_145919",
     "saved_dir": "result/AGCRN/pred",
     "data_loader":{
-        "type": "CrowdDataLoader",
+        "type": "TerminalFlightMixDataLoader",
         "args":{
             "data_dir": "data/temp",
             "batch_size": 1,
@@ -12,6 +12,7 @@
             "is_continous": true,
             "dates_dist": [["20240619", "20240620"]],
             "interval":5,
+            "normalizer": "std",
             "shuffle": false,
             "validation_split": 0,
             "training": true
