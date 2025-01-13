@@ -18,88 +18,10 @@ class Visualize:
             config = read_json(vis_config)
             self.name = config["name"]
             self.saved_dir = config["saved_dir"]
-            self.loss_metrics = config["loss_metrics"]
             self.tgt_pred = config["tgt_pred"]
-            input_path = self.loss_metrics["input_path"]
-            self.data = pd.read_json(input_path).set_index("epoch")
         else:
             print("Warning: visulization configuration file is not found in {}.".format(vis_config))
             exit(-1)
-
-    def metrics_vis(self):
-        metrics_info = self.loss_metrics["metrics"]
-        strategy = metrics_info["strategy"]
-        metrics_keys = metrics_info["keys"]
-
-        saved_sub_dir = self.loss_metrics["saved_sub_dir"]
-        saved_sub_dir_path = os.path.join(self.saved_dir, saved_sub_dir)
-        if not os.path.exists(saved_sub_dir_path):
-            os.makedirs(saved_sub_dir_path)
-
-        if strategy == "all":
-            nrows, ncols = metrics_info["nrows"], metrics_info["ncols"]
-            assert nrows * ncols == len(metrics_keys), "Dismatched number of keys and the nrows * ncols"
-            fig, axs = plt.subplots(nrows, ncols, figsize=metrics_info["a_figsize"])
-
-            # 遍历子图数组并绘制内容
-            for i, key in enumerate(metrics_keys):
-                metric = self.data[key]
-                row_i = i// ncols
-                col_j = i % ncols
-                axs[row_i, col_j].plot(metric.index.values, metric, color=metrics_info["color"], linewidth=metrics_info["linewidth"])
-                # 设置Y轴的格式为科学计数法
-                formatter = ticker.ScalarFormatter(useMathText=True)
-                formatter.set_powerlimits(metrics_info["power_limits"])  # 可以根据需要设置科学计数法的范围
-                axs[row_i, col_j].yaxis.set_major_formatter(formatter)
-                # 可选：隐藏子图的坐标轴
-                axs[row_i, col_j].tick_params(labelbottom=False)
-                axs[row_i, col_j].set_title(key)
-
-            # 调整子图间距
-            plt.tight_layout()
-            plt.title("Metrics Curve")
-
-            # 显示图表
-            plt.savefig(fname=os.path.join(saved_sub_dir_path, "metrics.png"), bbox_inches='tight')
-        else:
-            selected_keys = metrics_info["selected_keys"]
-            if not isinstance(selected_keys, list):
-                print("Incorrect parameter of metrics selected_keys, it should be a list")
-                exit(-1)
-            for key in selected_keys:
-                metric = self.data[key]
-            
-                plt.figure(figsize=metrics_info["s_figsize"], dpi=metrics_info["dpi"])
-                plt.plot(metric.index.values, metric, color=metrics_info["color"], linewidth=metrics_info["linewidth"])
-                plt.title(f'{key} Curve')
-                plt.xlabel('Epoches')
-                plt.ylabel(f'{key}')
-                plt.savefig(fname=os.path.join(saved_sub_dir_path, f"{key}.png"),bbox_inches='tight')
-            
-
-
-    
-    def loss_vis(self):
-        assert self.loss_metrics is not None, "Error: No parameter for visulizing loss!"
-        saved_sub_dir = self.loss_metrics["saved_sub_dir"]
-        loss_info = self.loss_metrics["loss"]
-        dynamic = loss_info["dynamic"]
-        saved_sub_dir_path = os.path.join(self.saved_dir, saved_sub_dir)
-        if not os.path.exists(saved_sub_dir_path):
-            os.makedirs(saved_sub_dir_path)
-
-        if not dynamic:
-            loss = self.data["loss"]
-            
-            plt.figure(figsize=loss_info["figsize"], dpi=loss_info["dpi"])
-            plt.plot(loss.index.values, loss, color=loss_info["color"], linewidth=loss_info["linewidth"])
-            plt.title('Loss Curve')
-            plt.xlabel('Epoches')
-            plt.ylabel('Loss')
-            plt.savefig(fname=os.path.join(saved_sub_dir_path, "loss.png"),bbox_inches='tight')
-            # print(loss)
-        else:
-            pass # TODO
 
     def tgt_pred_vis(self):
         assert self.tgt_pred is not None, "Error: No parameter for visulizing target and prediction!"
@@ -125,28 +47,9 @@ class Visualize:
             target=np.zeros((len(result),num_areas ))
             pred=np.zeros((len(result),num_areas ))
 
-            for i,(_, data) in enumerate(result.items()):
-                ## Crowd_CNN_GRU vis
-                # target[i] = np.array(data['target'])[0,-4,:,:].squeeze()
-                # pred[i] = np.array(data['prediction'])[0,-4, :, :].squeeze()
-
-                # if self.name == "A3TGCN": 
-                #     for j in range(num_areas):
-
-                #         ## A3TGCN vis
-                #         target[i][j] = data['target'][0][j][0]
-                #         pred[i][j] = data['prediction'][0][j][0]
-                # elif self.name == "AGCRN":
-                target[i] = data['target'][0]
-                pred[i] = data['prediction'][0]
-
-            import torch
-            gt = torch.Tensor(target)
-            pd = torch.Tensor(pred)
-            acc = 1 - torch.linalg.norm(gt - pd, "fro") / torch.linalg.norm(gt, "fro")
-            print(acc)
-
-
+            for i,data in enumerate(result):
+                target[i] = data['target'][1]
+                pred[i] = data['prediction'][1]
 
             input_filename = os.path.basename(filepath)
             filename_wo_ext, _ = os.path.splitext(input_filename)
@@ -154,19 +57,6 @@ class Visualize:
             saved_filepath = os.path.join(saved_sub_dir_path, saved_filename)
             self.plot_subplots(pred, target, saved_filepath, f"Performance of the model {self.name}", sub_titles=area_titles)
 
-            # plt.figure(0,figsize=self.tgt_pred["figsize"],dpi=self.tgt_pred["dpi"])
-            # for i in range(num_areas):
-            #     plt.subplot(12,2,i+1)
-            #     plt.plot(target[:,i],c='r', label= "ground truth")
-            #     plt.plot(pred[:,i],c='b', label = "prediction")
-            #     plt.legend()
-            #     plt.title(area_titles[i])
-            # input_filename = os.path.basename(filepath)
-            # filename_wo_ext, _ = os.path.splitext(input_filename)
-            
-            # saved_filename = f"{filename_wo_ext}.pdf"
-            # plt.savefig(fname=os.path.join(saved_sub_dir_path, saved_filename))
-            # plt.clf()
 
     def plot_subplots(self, pred, tgt, saved_filepath, fig_title="Main Title", sub_titles=None, xlabel="X Label", ylabel="Y Label", extra_text="Additional information below the title."):
         assert pred.shape == tgt.shape, "The shape of the predicted result and target result is unmatched!"
@@ -224,9 +114,7 @@ class Visualize:
         plt.close()
 
 if __name__=="__main__":
-    visualize = Visualize("config/vis/A3TGCN.jsonc")
+    visualize = Visualize("config/vis/TGCN.jsonc")
     visualize.tgt_pred_vis()
-    visualize.loss_vis()
-    visualize.metrics_vis()
 
 

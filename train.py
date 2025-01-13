@@ -10,15 +10,15 @@ from parse_config import ConfigParser
 
 # import pred_model.structure.CrowdCNNGRU as module_arch
 
-# import pred_model.TGCN.TGCN as module_arch
-# from trainer import TGCNTrainer as Trainer
+import pred_model.TGCN.TGCN as module_arch
+from trainer import TGCNTrainer as Trainer
 
 # import pred_model.AGCRN.AGCRN as module_arch
 # from trainer import AGCRNTrainer as Trainer
 
 
-import pred_model.A3TGCN.A3TGCN as module_arch
-from trainer import A3TGCNTrainer as Trainer
+# import pred_model.A3TGCN.A3TGCN as module_arch
+# from trainer import A3TGCNTrainer as Trainer
 
 from utils import prepare_device
 
@@ -39,16 +39,12 @@ def main(config):
 
     # build model architecture, then print to console
     model = config.init_obj('arch', module_arch)
-    # for p in model.parameters():
-    #     if p.dim() > 1:
-    #         torch.nn.init.xavier_uniform_(p)
-    #     else:
-    #         torch.nn.init.uniform_(p)
     logger.info(model)
 
     # prepare for (multi-device) GPU training
     device, device_ids = prepare_device(config['n_gpu'])
     model = model.to(device)
+    
     if len(device_ids) > 1:
         model = torch.nn.DataParallel(model, device_ids=device_ids)
 
@@ -69,15 +65,16 @@ def main(config):
                       lr_scheduler=lr_scheduler)
     trainer.train()
 
-
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default= "config/train/A3TGCN.jsonc", type=str,
+    args.add_argument('-c', '--config', default= "config/train/TGCN.jsonc", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')
     args.add_argument('-d', '--device', default=None, type=str,
                       help='indices of GPUs to enable (default: all)')
+    args.add_argument('-tr', '--train', default=True, type = bool,
+                       help = 'decide to train/test mode')
 
     # custom cli options to modify configuration from default values given in json file.
     CustomArgs = collections.namedtuple('CustomArgs', 'flags type target')

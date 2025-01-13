@@ -1,8 +1,15 @@
 {
     "name": "A3TGCN",
-    "DEBUG": true,
-    "model_path": "LSaved/A3TGCN/cache/models",
+    "DEBUG": false,
+    
+    "model_path": "LSaved/A3TGCN/models/0113_163423",
+    
     "saved_dir": "result/A3TGCN/pred",
+    "log_dir": "TestLog",
+
+    "n_gpu": 1,
+    "loss": "mse_with_regularizer_loss",
+    "metrics": ["RMSE", "MAE", "MAPE", "Accuracy", "R2", "Explained_Variance"],
     "data_loader":{
         "type": "TerminalFlightMixDataLoader",
         "args":{
@@ -19,18 +26,6 @@
             "training": true
         }
     },
-    "loss": "mse_with_regularizer_loss",
-    "metrics": [
-        "RMSE",
-        "MAE",
-        "MAPE",
-        "Accuracy",
-        "R2",
-        "Explained_Variance"
-    ],
-    "trainer":{
-        "save_dir": "LSaved/A3TGCN",
-    },
     "arch": {
         "type": "A3TGCN",
         "args": {
@@ -40,6 +35,6 @@
             "adj_path": "data/temp/adj.csv",
             "batch_size": 1
         }
-    },
-    "n_gpu": 1,
+    }
+    
 }

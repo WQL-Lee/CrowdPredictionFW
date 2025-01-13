@@ -60,6 +60,13 @@ class AGCRN(nn.Module):
         self.end_conv = nn.Conv2d(1, horizon * self.output_dim, kernel_size=(1, self.hidden_dim), bias=True)
         self.name = "AGCRN"
 
+        # 参数初始化
+        for p in self.parameters():
+            if p.dim() > 1:
+                torch.nn.init.xavier_uniform_(p)
+            else:
+                torch.nn.init.uniform_(p)
+
     def forward(self, source, targets=None, teacher_forcing_ratio=0.5):
         #source: B, T_1, N, D
         #target: B, T_2, N, D

@@ -28,10 +28,14 @@ class TGCNTrainer(BaseTrainer):
         self.lr_scheduler = lr_scheduler
         self.log_step = int(np.sqrt(data_loader.batch_size))
         
+        self.train_per_epoch = len(data_loader)
+        if valid_data_loader is not None:
+            self.valid_per_epoch = len(valid_data_loader)
+        
         self.model_name = model.name
         self.scaler = self.data_loader.dataset.scaler
 
-        self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
+        # self.train_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
         self.valid_metrics = MetricTracker('loss', *[m.__name__ for m in self.metric_ftns], writer=self.writer)
        
     def _train_epoch(self, epoch):
@@ -42,10 +46,10 @@ class TGCNTrainer(BaseTrainer):
         :return: A log that contains average loss and metric in this epoch.
         """
 
+        total_loss = 0.0
         self.model.train()
-        self.train_metrics.reset()
         for batch_idx, (inputs, targets, _) in enumerate(self.data_loader):
-            # inputs = his_data
+
             inputs = inputs[...,0]
             targets = targets[..., 0]
 
@@ -61,33 +65,35 @@ class TGCNTrainer(BaseTrainer):
             self.optimizer.step()
 
             self.writer.set_step((epoch - 1) * self.len_epoch + batch_idx)
-            self.train_metrics.update('loss', loss.item())
-            for met in self.metric_ftns:
-                met_value=met(outputs, targets).cpu().item() 
-                self.train_metrics.update(met.__name__,  met_value)
+            total_loss += loss.item()
 
             if batch_idx % self.log_step == 0:
-                self.logger.debug('Train Epoch: {} {} learning rate:{} Loss: {:.6f}'.format(
+                self.logger.info('Train Epoch: {} {} learning rate:{} Loss: {:.6f}'.format(
                     epoch,
                     self._progress(batch_idx),
                     self.optimizer.state_dict()['param_groups'][0]['lr'],
                     loss.item()))
-                # self.writer.add_image('input', make_grid(data.cpu(), nrow=8, normalize=True))
-
-            if self.lr_scheduler is not None:
-                self.lr_scheduler.step()
 
             if batch_idx == self.len_epoch:
                 break
         
-        log = self.train_metrics.result()
+        # log = self.train_metrics.result()
+        log = None
 
         if self.do_validation:
             val_log = self._valid_epoch(epoch)
-            log.update(**{'val_'+k : v for k, v in val_log.items()})
-        #
-        # if self.lr_scheduler is not None:
-        #     self.lr_scheduler.step()
+            log={'val_'+k : v for k, v in val_log.items()}
+        
+        self.logger.info('**************************************')
+        self.logger.info('Train Epoch {}: Averaged Loss: {:.6f}'.format(epoch, total_loss/self.train_per_epoch))
+        if self.do_validation:
+            self.logger.info('Valid Epoch {}: Averaged Loss: {:.6f}'.format(epoch, val_log['loss']))
+            for key, value in val_log.items():
+                self.logger.info('    {:10s}: {:.4f}'.format(str(key), value))
+        self.logger.info('**************************************')
+
+        if self.lr_scheduler is not None:
+            self.lr_scheduler.step()
 
         return log  
 
@@ -98,8 +104,6 @@ class TGCNTrainer(BaseTrainer):
         :param epoch: Integer, current training epoch.
         :return: A log that contains information about validation
         """
-
-
         self.model.eval()
         self.valid_metrics.reset()
         with torch.no_grad():
@@ -135,3 +139,38 @@ class TGCNTrainer(BaseTrainer):
             current = batch_idx
             total = self.len_epoch
         return base.format(current, total, 100.0 * current / total)
+    
+
+    @staticmethod
+    def test(model, data_loader, device, scaler):
+
+        model.eval()
+        model = model.to(device)
+        y_pred = []
+        y_true = []
+        y_time = []
+        with torch.no_grad():
+            for batch_idx, (inputs, targets,timestamp) in enumerate(data_loader):
+                n_his = inputs.shape[1]
+
+                inputs = inputs[...,0]
+                targets = targets[..., 0]
+                
+                inputs = inputs.to(device)
+                targets = targets.to(device)
+                outputs = model(inputs).to(device)
+                
+                # outputs = outputs * max_value # (B, T, N, 1)
+                # targets = targets* max_value # (B, T, N, 1)
+                targets = scaler.inverse_transform(targets)
+                outputs = scaler.inverse_transform(outputs)
+                
+                y_true.append(targets)
+                y_pred.append(outputs)
+                y_time.append(timestamp[n_his:])
+
+
+        y_true = scaler.inverse_transform(torch.cat(y_true, dim=0))
+        y_pred =scaler.inverse_transform(torch.cat(y_pred, dim=0))
+
+        return y_pred, y_true, y_time

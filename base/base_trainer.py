@@ -75,9 +75,9 @@ class BaseTrainer:
             
             self.result_data = pd.concat([self.result_data, pd.DataFrame([log])], ignore_index=True)
 
-            # print logged informations to the screen
-            for key, value in log.items():
-                self.logger.info('    {:15s}: {}'.format(str(key), value))
+            # # print logged informations to the screen
+            # for key, value in log.items():
+            #     self.logger.info('    {:15s}: {:.4f}'.format(str(key), value))
 
             # evaluate model performance according to configured metric, save best checkpoint as model_best
             best = False

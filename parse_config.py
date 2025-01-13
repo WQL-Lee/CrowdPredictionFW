@@ -9,7 +9,7 @@ from utils import read_json, write_json
 
 
 class ConfigParser:
-    def __init__(self, config, resume=None, modification=None, run_id=None):
+    def __init__(self, config, train, resume=None, modification=None, run_id=None):
         """
         class to parse configuration json file. Handles hyperparameters for training, initializations of modules, checkpoint saving
         and logging module.
@@ -22,37 +22,14 @@ class ConfigParser:
         self._config = _update_config(config, modification)
         self.resume = resume
 
-        # set save_dir where trained model and log will be saved.
-        save_dir = Path(self.config['trainer']['save_dir'])
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-
-        exper_name = self.config['name']
-        if run_id is None: # use timestamp as default run-id
-            run_id = datetime.now().strftime(r'%m%d_%H%M%S')
-        
-        debug = self._config["DEBUG"]
-        if debug:
-            self._save_dir = save_dir/'cache'/'models'
-            self._log_dir = save_dir/'cache'/'log'
-            exist_ok = ''
-        else :
-            self._save_dir = save_dir / 'models'/run_id
-            self._log_dir = save_dir / 'log' /run_id
-            # make directory for saving checkpoints and log.
-            exist_ok = run_id == ''
-        
-        if not os.path.exists(os.path.dirname(self.save_dir)):
-            os.makedirs(self.save_dir, exist_ok=exist_ok)
-        if not os.path.exists(os.path.dirname(self.log_dir)):
-            os.makedirs(self.log_dir, exist_ok=exist_ok)
-        # self.save_dir.makedirs(parents=True, exist_ok=exist_ok)
-        # self.log_dir.makedirs(parents=True, exist_ok=exist_ok)
-        # save updated config file to the checkpoint dir
-        write_json(self.config, self.save_dir / 'config.json')
+        self.debug = self.config["DEBUG"]
+        if train:
+            self.setup_train_config(run_id)
+        else:
+            self.setup_test_config()
 
         # configure logging module
-        setup_logging(debug, self.log_dir)
+        setup_logging(self.debug, self.log_dir)
         self.log_levels = {
             0: logging.WARNING,
             1: logging.INFO,
@@ -87,7 +64,7 @@ class ConfigParser:
 
         # parse custom cli options into dictionary
         modification = {opt.target : getattr(args, _get_opt_name(opt.flags)) for opt in options}
-        return cls(config, resume, modification)
+        return cls(config, args.train, resume, modification)
 
     def init_obj(self, name, module, *args, **kwargs):
         """
@@ -129,6 +106,44 @@ class ConfigParser:
         logger = logging.getLogger(name)
         logger.setLevel(self.log_levels[verbosity])
         return logger
+    
+
+    def setup_train_config(self, run_id):
+        # set save_dir where trained model and log will be saved.
+        save_dir = Path(self.config['trainer']['save_dir'])
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
+
+        exper_name = self.config['name']
+        if run_id is None: # use timestamp as default run-id
+            run_id = datetime.now().strftime(r'%m%d_%H%M%S')
+        
+        if self.debug:
+            self._save_dir = save_dir/'cache'/'models'
+            self._log_dir = save_dir/'cache'/'log'
+            exist_ok = ''
+        else :
+            self._save_dir = save_dir / 'models'/run_id
+            self._log_dir = save_dir / 'log' /run_id
+            # make directory for saving checkpoints and log.
+            exist_ok = run_id == ''
+        
+        if not os.path.exists(self.save_dir):
+            os.makedirs(self.save_dir, exist_ok=exist_ok)
+        if not os.path.exists(self.log_dir):
+            os.makedirs(self.log_dir, exist_ok=exist_ok)
+        # self.save_dir.makedirs(parents=True, exist_ok=exist_ok)
+        # self.log_dir.makedirs(parents=True, exist_ok=exist_ok)
+        # save updated config file to the checkpoint dir
+        write_json(self.config, self.save_dir / 'config.json')
+
+    def setup_test_config(self):
+
+        self._log_dir = self.config['log_dir']
+        pass
+
+
+
 
     # setting read-only attributes
     @property

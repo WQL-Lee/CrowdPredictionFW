@@ -1,7 +1,15 @@
 {
     "name": "AGCRN",
     "n_gpu": 1,
-    "DEBUG": false,
+    "DEBUG": true,
+
+    "result_info":{
+        "is_saved": true,
+        "saved_dir": "result/AGCRN/train"
+    },
+
+    "loss": "mse_loss",
+    "metrics": ["RMSE", "MAE", "MAPE"],
     "arch": {
         "type": "AGCRN",
         "args": {
@@ -38,12 +46,6 @@
             "lr": 0.001
         }
     },
-    "loss": "mse_loss",
-    "metrics": ["RMSE",
-        "MAE",
-        "R2",
-        "Explained_Variance"
-    ],
     "lr_scheduler": {
         "type": "StepLR",
         "args": {
@@ -58,10 +60,5 @@
         "verbosity": 2,
         "early_stop": 20,
         "tensorboard": true
-    },
-
-    "result_info":{
-        "is_saved": true,
-        "saved_dir": "result/AGCRN/train"
     }
 }

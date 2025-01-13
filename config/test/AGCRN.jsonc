@@ -1,7 +1,20 @@
 {
     "name": "AGCRN",
-    "model_path": "LSaved/AGCRN/models/AGCRN/0109_145919",
+    "DEBUG": false,
+    
+    "model_path": "LSaved/AGCRN/models/0113_160232",
+    
     "saved_dir": "result/AGCRN/pred",
+    "log_dir": "TestLog",
+
+    "n_gpu": 1,
+    "loss": "mse_loss",
+    "metrics": [
+        "MAE",
+        "RMSE",
+        "MAPE",
+        "Accuracy"
+    ],
     "data_loader":{
         "type": "TerminalFlightMixDataLoader",
         "args":{
@@ -18,18 +31,6 @@
             "training": true
         }
     },
-    "loss": "mse_with_regularizer_loss",
-    "metrics": [
-        "RMSE",
-        "MAE",
-        "MAPE",
-        "Accuracy",
-        "R2",
-        "Explained_Variance"
-    ],
-    "trainer":{
-        "save_dir": "LSaved/AGCRN",
-    },
     "arch": {
         "type": "AGCRN",
         "args": {
@@ -43,6 +44,6 @@
             "num_layers": 2, 
             "default_graph": true
         }
-    },
-    "n_gpu": 1,
+    }
+    
 }

@@ -65,8 +65,23 @@ def MAPE(outputs, targets):
 
 
 def Accuracy(outputs, targets):
-    outputs=outputs.squeeze(0)
-    targets = targets.squeeze(0)
+    #input B, T, N, D or B, N, D or B*N, D
+    if len(targets.shape) == 2:
+        pass
+    elif len(targets.shape) == 3:
+        # B, T, D-> B*T, D
+        outputs = outputs.reshape(-1, outputs.shape[-1])
+        targets = targets.reshape(-1, targets.shape[-1])
+    elif len(targets.shape)  == 4:
+        #B, T, N, D -> B* T*N, D
+        outputs = outputs.reshape(-1, outputs.shape[-1])
+        targets = targets.reshape(-1, targets.shape[-1])
+    else:
+        raise ValueError
+    # outputs=outputs.squeeze(0)
+    # targets = targets.squeeze(0)
+    # outputs = outputs.reshape(-1)
+    # targets = targets.reshape(-1)
     return 1 - torch.linalg.norm(targets - outputs, "fro") / torch.linalg.norm(targets, "fro")
 
 def R2(outputs,targets):
@@ -74,3 +89,10 @@ def R2(outputs,targets):
 
 def Explained_Variance(outputs, targets):
     return 1 - torch.var(targets - outputs) / torch.var(targets)
+
+
+
+
+
+
+

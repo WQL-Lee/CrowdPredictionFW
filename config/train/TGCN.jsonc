@@ -1,8 +1,14 @@
 {
     "name": "TGCN",
     "n_gpu": 1,
-    "DEBUG": true,
+    "DEBUG": false,
 
+    "result_info":{
+        "is_saved": true,
+        "saved_dir": "result/TGCN/train"
+    },
+    "loss": "mse_with_regularizer_loss",
+    "metrics": ["RMSE", "MAE", "Accuracy", "R2", "Explained_Variance"],
     "arch": {
         "type": "TGCN",
         "args": {
@@ -34,13 +40,6 @@
             "lr": 0.001
         }
     },
-    "loss": "mse_with_regularizer_loss",
-    "metrics": ["RMSE",
-        "MAE",
-        //"Accuracy",
-        "R2",
-        "Explained_Variance"
-    ],
     "lr_scheduler": {
         "type": "StepLR",
         "args": {
@@ -55,10 +54,5 @@
         "verbosity": 2,
         "early_stop": 20,
         "tensorboard": true
-    },
-
-    "result_info":{
-        "is_saved": true,
-        "saved_dir": "result/TGCN/train"
     }
 }

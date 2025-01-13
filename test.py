@@ -8,297 +8,163 @@ import re
 
 import data_loader.data_loaders as module_data
 # import pred_model.structure.CrowdCNNGRU as module_arch
-# import pred_model.TGCN.TGCN as module_arch
-import pred_model.A3TGCN.A3TGCN as module_arch
+import pred_model.TGCN.TGCN as module_arch
+# import pred_model.A3TGCN.A3TGCN as module_arch
 # import pred_model.AGCRN.AGCRN as module_arch
 import pred_model.loss as module_loss
 import pred_model.metric as module_metric
 from parse_config import ConfigParser
 
+from trainer.AGCRNTrainer import AGCRNTrainer
+from trainer.A3TGCNTrainer import A3TGCNTrainer
+from trainer.TGCNTrainer import TGCNTrainer
+
 from utils.math import z_inverse
 
-class Inference:
-    def __init__(self, model_name, model, data_loader,loss_fn, metric_fns, device):
+class Testor:
+    def __init__(self, model_name, model_arch, model_path, saved_dir, logger, data_loader,loss_fn, metric_fns, device, n_gpu=1):
         self.model_name = model_name
+        self.model_path = model_path
         self.data_loader = data_loader
-        self.model = model
+        
+        self.model = Testor.load_model(model_path, model_arch)
+        if n_gpu > 1:
+            self.model = torch.nn.DataParallel(self.model)  
         self.loss_fn = loss_fn
         self.metric_fns= metric_fns
         self.device= device
+        self.logger = logger
+        self.saved_dir = saved_dir
+        self.scaler = self.data_loader.dataset.scaler
+
+        
+        
+    @staticmethod
+    def load_model(model_path, model_arch):
+        model = model_arch
+        checkpoint = torch.load(model_path)
+        state_dict = checkpoint['state_dict']
+        model.load_state_dict(state_dict)
+        return model
     
-    def inference(self):
-        if self.model_name == "Crowd_CNN_GRU":
-            total_loss, total_metrics, output_dict = self.test_crowd_cnn_gru()
-        elif self.model_name == "TGCN":
-            total_loss, total_metrics, output_dict = self.test_tgcn()
-        elif self.model_name == "A3TGCN":
-            total_loss, total_metrics, output_dict = self.test_a3tgcn()
-        elif self.model_name == "AGCRN":
-            total_loss, total_metrics, output_dict = self.test_agcrn()
+
+
+    
+    def test(self):
+        if self.model_name == "AGCRN":
+            y_pred, y_true, y_time = AGCRNTrainer.test(self.model, self.data_loader, self.device, self.scaler)
+        elif self.model_name == 'A3TGCN':
+            y_pred, y_true, y_time = A3TGCNTrainer.test(self.model, self.data_loader, self.device, self.scaler)
+        elif self.model_name == 'TGCN':
+            y_pred, y_true, y_time = TGCNTrainer.test(self.model, self.data_loader, self.device, self.scaler)
         else:
             print("The model has not been specified!")
             exit(-1)
-        return total_loss, total_metrics, output_dict
-    
-    def test_crowd_cnn_gru(self):
-        total_loss = 0.0
-        total_metrics = torch.zeros(len(self.metric_fns))
-        output_dict= {}
-        device = self.device
-        mean_std = self.data_loader.dataset.mean_std
-        with torch.no_grad():
-            for batch_idx, (x_g, t_g, cam_valid, time_stamp, flight) in enumerate(self.data_loader):
-                tmp={}
-                x_g, t_g, cam_valid,flight = x_g.to(device), t_g.to(device), cam_valid.to(device), flight.to(device)
-                output = self.model.decode(x_g,flight[:,:,:,:])
-                # output = model.multi_pred(x_g,flight[:,:,:,:])
 
-                #
-                # save sample images, or do something with output here
-                #
-
-                tmp['target']=z_inverse(t_g[:,:,:,:].cpu().numpy(),mean_std[0],mean_std[1]).tolist()
-                tmp['prediction'] = z_inverse(output.cpu().numpy(),mean_std[0],mean_std[1]).tolist()
-                tmp['time_stamp'] = time_stamp[-12:]
-                # tmp['flight'] = flight[:,-1:,:,:]
-                output_dict[batch_idx]=tmp.copy()
-                # computing loss, metrics on test set
-                loss = self.loss_fn(output, t_g[:,:,:,:])
-                batch_size = x_g.shape[0]
-                total_loss += loss.item() * batch_size
-                # for i, metric in enumerate(metric_fns):
-                #     total_metrics[i] += metric(output, t_g) * batch_size
-                for i,met in enumerate(self.metric_fns):
-                    total_metrics[i] += met( t_g[:,:,:,:].cpu().numpy(),output.cpu().numpy(), mean_std,
-                                                                cam_valid[:,:,:,:].cpu().numpy())
-        return total_loss, total_metrics, output_dict
-    
-    def test_tgcn(self):
-        total_loss = 0.0
-        total_metrics = torch.zeros(len(self.metric_fns))
-        output_dict= {}
-        device = self.device
-        scaler = self.data_loader.dataset.scaler
-        with torch.no_grad():
-            for batch_idx, (inputs, targets, timestamp) in enumerate(self.data_loader):
-                tmp={}
-                
-                inputs = inputs[..., 0]
-                targets = targets[..., 0]
-                inputs = inputs.to(device)
-                targets = targets.to(device)
-
-                outputs = self.model(inputs)
-
-                # outputs = outputs * max_value # (B, T, N, 1)
-                # targets = targets* max_value # (B, T, N, 1)
-                targets = scaler.inverse_transform(targets)
-                outputs = scaler.inverse_transform(outputs)
-                
-                outputs = outputs.reshape(-1, outputs.shape[2], 1) # (B*T, N, 1)
-                targets = targets.reshape(-1, targets.shape[2], 1) # (B*T, N, 1)
-
-                outputs = outputs.squeeze(-1) #(B*T, N)
-                targets = targets.squeeze(-1) # (B*T, N)
-
-                # his_data = his_data/max_value
-                # targets = targets/max_value
-                # his_data = his_data.to(device)
-                # targets = targets.to(device)
-
-                # outputs = self.model(his_data)
-
-                # outputs = outputs * max_value
-                # targets = targets* max_value
-                tmp['target']=targets.cpu().detach().numpy().tolist()
-                tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
-                tmp['time_stamp'] = timestamp[:-1]
-                # tmp['flight'] = flight[:,-1:,:,:]
-                output_dict[batch_idx]=tmp.copy()
-                # computing loss, metrics on test set
-                loss = self.loss_fn(outputs, targets, self.model)
-                batch_size = targets.shape[0]
-                total_loss += loss.item() * batch_size
-
-                for i,met in enumerate(self.metric_fns):
-                    total_metrics[i] += met(outputs, targets).cpu().detach().numpy()
-        return total_loss, total_metrics, output_dict
-    
-    def test_a3tgcn(self):
-        total_loss = 0.0
-        total_metrics = torch.zeros(len(self.metric_fns))
-        output_dict= {}
-
-        edge_index = self.model.edge_index
-        scaler = self.data_loader.dataset.scaler
-
-
-        with torch.no_grad():
-            for batch_idx, (inputs, targets,timestamp) in enumerate(self.data_loader):
-                tmp={}
-
-                inputs = inputs.permute(0,2,3,1)
-                inputs = inputs.to(self.device)
-                targets = targets.to(self.device)
-                edge_index = edge_index.to(self.device)
-
-                outputs = self.model(inputs, edge_index) # outputs: (batch_sz, num_node, n_pred)
-                outputs = outputs.unsqueeze(3)
-                outputs = outputs.permute(0,2,1,3)
-
-                outputs = self.model(inputs, edge_index)
-                outputs = outputs.unsqueeze(3)
-                outputs = outputs.permute(0,2,1,3)
-
-                targets = scaler.inverse_transform(targets)
-                outputs = scaler.inverse_transform(outputs)
-
-                outputs = outputs.reshape(-1, outputs.shape[2], 1) # (B*T, N, 1)
-                targets = targets.reshape(-1, targets.shape[2], 1) # (B*T, N, 1)
-
-                outputs = outputs.squeeze(-1) #(B*T, N)
-                targets = targets.squeeze(-1) # (B*T, N)
-
-
-                tmp['target']=targets.cpu().detach().numpy().tolist()
-                tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
-                tmp['time_stamp'] = timestamp[:-1]
-                # tmp['flight'] = flight[:,-1:,:,:]
-                output_dict[batch_idx]=tmp.copy()
-                # computing loss, metrics on test set
-                loss = self.loss_fn(outputs, targets, self.model)
-                batch_size = targets.shape[0]
-                total_loss += loss.item() * batch_size
-
-                for i,met in enumerate(self.metric_fns):
-                    total_metrics[i] += met(outputs, targets).cpu().detach().numpy()
-        return total_loss, total_metrics, output_dict
-    
-    def test_agcrn(self):
-        total_loss = 0.0
-        total_metrics = torch.zeros(len(self.metric_fns))
-        output_dict= {}
-        device = self.device
-        scaler = self.data_loader.dataset.scaler
-
-        with torch.no_grad():
-            for batch_idx, (inputs, targets,timestamp) in enumerate(self.data_loader):
-                tmp={}
-
-                # flight = flight_data.unsqueeze(1)
-                # flight = flight.unsqueeze(3)
-                # flight = flight.repeat(1,num_nodes, 1, n_his)
-                # inputs = torch.concat((his_data, flight), 2)
-                
-                # # inputs = his_data
-
-                # inputs = inputs/max_value
-                # targets = targets/max_value
-                # inputs = inputs.to(device)
-                # targets = targets.to(device)
-                # inputs = inputs.permute(0, 3, 1, 2)
-                # targets = targets.unsqueeze(3)
-                # targets = targets.permute(0, 2, 1, 3)
-
-                # inputs = inputs/max_value
-                # targets = targets/max_value
-                inputs = inputs.to(device)
-                targets = targets.to(device)
-
-                outputs = self.model(inputs)
-
-                # outputs = outputs * max_value # (B, T, N, 1)
-                # targets = targets* max_value # (B, T, N, 1)
-                targets = scaler.inverse_transform(targets)
-                outputs = scaler.inverse_transform(outputs)
-                
-                outputs = outputs.reshape(-1, outputs.shape[2], 1) # (B*T, N, 1)
-                targets = targets.reshape(-1, targets.shape[2], 1) # (B*T, N, 1)
-
-                outputs = outputs.squeeze(-1) #(B*T, N)
-                targets = targets.squeeze(-1) # (B*T, N)
-
-                tmp['target']=targets.cpu().detach().numpy().tolist()
-                tmp['prediction'] = outputs.cpu().detach().numpy().tolist()
-                tmp['time_stamp'] = timestamp[:-1]
-                # tmp['flight'] = flight[:,-1:,:,:]
-                output_dict[batch_idx]=tmp.copy()
-                # computing loss, metrics on test set
-                loss = self.loss_fn(outputs, targets, self.model)
-                batch_size = targets.shape[0]
-                total_loss += loss.item() * batch_size
-
-                for i,met in enumerate(self.metric_fns):
-                    total_metrics[i] += met(outputs, targets).cpu().detach().numpy()
-        return total_loss, total_metrics, output_dict
-
-
-    
+        self.logger.info('*' * 100)
+        self.logger.info(self.model_path)
+        for t in range(y_true.shape[1]):
+            metric_dict = dict()
+            for i,met in enumerate(self.metric_fns):
+                met_value = met(y_pred[:,t,...],y_true[:,t,...])
+                metric_dict[met.__name__] = met_value
         
+            formatted_line = " ".join([f"{key}: {value:.4f}" for key, value in metric_dict.items()])
+            formatted_line = f"Horizon: {t} " + formatted_line
+            self.logger.info(formatted_line)
+        
+        metric_dict = dict()
+        for i,met in enumerate(self.metric_fns):
+            met_value = met(y_pred,y_true)
+            metric_dict[met.__name__] = met_value
+
+        formatted_line = " ".join([f"{key}: {value:.4f}" for key, value in metric_dict.items()])
+        formatted_line = f"Average Horizon: " + formatted_line
+        self.logger.info(formatted_line)
+
+        self.logger.info('*' * 100)
+
+        if self.saved_dir:
+            self.save(y_pred, y_true, y_time)
+
+    
+    def save(self, y_pred, y_true, y_time):
+        # y_pred: (B, T, N, 1)
+        # y_true: (B, T, N, 1)
+        # y_time: (B, T)
+
+        y_pred = y_pred.squeeze(-1)
+        y_true = y_true.squeeze(-1)
+        
+        if type(y_pred) == torch.Tensor:
+            y_pred = y_pred.cpu().detach().numpy().tolist()
+            y_true = y_true.cpu().detach().numpy().tolist()
+
+        output_dict = list()
+        for i, (i_pred, i_true, i_time) in enumerate(zip(y_pred, y_true, y_time)):
+            tmp = {"sample_i": int, "target": list, "prediction": list, "timestamp": list}
+            
+            tmp['sample_i'] = i
+            tmp['target'] = i_true
+            tmp['prediction'] = i_pred
+            tmp['timestamp'] = i_time
+            output_dict.append(tmp)
+        
+        if not os.path.exists(self.saved_dir):
+            os.makedirs(self.saved_dir)
+        # output_dict= {'target': y_true, 'prediction':y_pred, 'timestamp': y_time}
+        model_index = re.findall(r'\d+\.\d+|\d+', self.model_path)[-1]
+        filename = f"{self.model_name}_checkpoint_{int(model_index)}.json"
+        with open(os.path.join(self.saved_dir, filename), 'w', encoding='utf-8') as js:
+            json.dump(output_dict, js, indent=4, ensure_ascii=False)
+
+        
+        
+        
+        
+
 
 def main(config):
     logger = config.get_logger('test')
     data_loader = config.init_obj('data_loader', module_data)
 
     # build model architecture
-    model = config.init_obj('arch', module_arch)
-    logger.info(model)
-
+    model_arch = config.init_obj('arch', module_arch)
     # get function handles of loss and metrics
     loss_fn = getattr(module_loss, config['loss'])
     metric_fns = [getattr(module_metric, met) for met in config['metrics']]
 
     logger.info('Loading checkpoint: {} ...'.format(config.resume))
+    logger.info(model_arch) 
     
-
     if os.path.isdir(config["model_path"]):
         model_paths = glob.glob(os.path.join(config["model_path"], "*.pth"))
         model_paths.sort()
     else:
         model_paths = [config["model_path"]]
-
-    saved_dir = config["saved_dir"]
-    if not os.path.exists(saved_dir):
-        os.makedirs(saved_dir)
     
-    for i, model_path in enumerate(model_paths):
-        checkpoint = torch.load(model_path)
-        state_dict = checkpoint['state_dict']
-        if config['n_gpu'] > 1:
-            model = torch.nn.DataParallel(model)
-        model.load_state_dict(state_dict)
+    model_name = config['name']
+    n_gpu = config['n_gpu']
+    saved_dir = config["saved_dir"]
 
-        # prepare model for testing
-        device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        model = model.to(device)
-        model.eval()
+    device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+    
+    for _, model_path in enumerate(model_paths): 
+        testor =Testor(model_name, model_arch, model_path, saved_dir, logger, data_loader, loss_fn, metric_fns, device, n_gpu)
+        testor.test()
 
-        infer = Inference(model.name, model, data_loader, loss_fn, metric_fns, device)
-        total_loss, total_metrics, output_dict = infer.inference()
-        model_index = re.findall(r'\d+\.\d+|\d+', model_path)[-1]
-        filename = f"{model.name}_checkpoint_{int(model_index)}.json"
-        with open(os.path.join(saved_dir, filename), 'w', encoding='utf-8') as js:
-            json.dump(output_dict, js, ensure_ascii=False)
-
-        n_samples = len(data_loader.sampler)
-        log = {'loss': total_loss / n_samples}
-        log.update({
-            met.__name__: total_metrics[i].item() / n_samples for i, met in enumerate(metric_fns)
-        })
-        print('-'*100)
-        print(model_path)
-        logger.info(log)
-        print('-'*100)
 
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default="config/test/A3TGCN.jsonc", type=str,
+    args.add_argument('-c', '--config', default="config/test/TGCN.jsonc", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')
     args.add_argument('-d', '--device', default=None, type=str,
                       help='indices of GPUs to enable (default: all)')
+    args.add_argument('-tr', '--train', default=False, type = bool,
+                       help = 'decide to train/test mode')
 
     config = ConfigParser.from_args(args)
     main(config)

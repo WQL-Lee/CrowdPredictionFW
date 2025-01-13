@@ -1,8 +1,15 @@
 {
     "name": "TGCN",
     "DEBUG": true,
-    "model_path": "LSaved/TGCN/cache/models",
+
+    "model_path": "LSaved/TGCN/models/0113_165725",
+
     "saved_dir": "result/TGCN/pred",
+    "log_dir": "TestLog",
+
+    "n_gpu": 1,
+    "loss": "mse_with_regularizer_loss",
+    "metrics": ["RMSE", "MAE", "MAPE", "Accuracy", "R2", "Explained_Variance"],
     "data_loader":{
         "type": "TerminalDataLoader",
         "args":{
@@ -19,18 +26,6 @@
             "training": true
         }
     },
-    "loss": "mse_with_regularizer_loss",
-    "metrics": [
-        "RMSE",
-        "MAE",
-        "MAPE",
-        "Accuracy",
-        "R2",
-        "Explained_Variance"
-    ],
-    "trainer":{
-        "save_dir": "LSaved/TGCN",
-    },
     "arch": {
         "type": "TGCN",
         "args": {
@@ -39,6 +34,6 @@
             "hidden_dim": 256,
             "output_dim": 6
         }
-    },
-    "n_gpu": 1,
+    }
+    
 }
