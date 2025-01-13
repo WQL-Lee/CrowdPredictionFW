@@ -15,6 +15,8 @@ def setup_logging(debug, save_dir='', log_config='logger/logger_config.json', de
         logger = logging.getLogger()
         logger.addHandler(console_handler)
     else: 
+        if not os.path.exists(save_dir):
+            os.makedirs(save_dir)
         log_config = Path(log_config)
         if log_config.is_file():
             config = read_json(log_config)
