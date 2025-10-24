@@ -21,7 +21,7 @@ class A3TGCN(torch.nn.Module):
 
     def load_adj(self, adj_path):
         adj = pd.DataFrame(np.eye(10))
-        adj = np.mat(adj)
+        adj = np.asmatrix(adj)
         return adj
 
     def forward(self, x, edge_index):

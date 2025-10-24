@@ -118,7 +118,7 @@ class TGCN(nn.Module):
     
     def load_adj(self, adj_path):
         adj = pd.DataFrame(np.eye(10))
-        adj = np.mat(adj)
+        adj = np.asmatrix(adj)
         return adj
 
     def forward(self, inputs):

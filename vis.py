@@ -114,7 +114,7 @@ class Visualize:
         plt.close()
 
 if __name__=="__main__":
-    visualize = Visualize("config/vis/TGCN.jsonc")
+    visualize = Visualize("config/vis/A3TGCN.jsonc")
     visualize.tgt_pred_vis()
 
 

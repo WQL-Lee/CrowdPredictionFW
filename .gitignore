@@ -1,0 +1,24 @@
+vscode
+
+__pycache__
+
+# 其它文件
+_other/*
+convert_data/*
+
+# 数据文件
+data/*
+
+# 中间文件
+result/*
+
+LSaved/*
+
+TestLog/*
+
+vis/*
+
+# 部分python文件
+debug.py
+preprocess.py
+pyg_test.py

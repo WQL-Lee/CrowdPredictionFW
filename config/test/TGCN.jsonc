@@ -1,8 +1,8 @@
 {
     "name": "TGCN",
-    "DEBUG": true,
+    "DEBUG": false,
 
-    "model_path": "LSaved/TGCN/models/0113_165725",
+    "model_path": "LSaved/TGCN/models/1024_203404",
 
     "saved_dir": "result/TGCN/pred",
     "log_dir": "TestLog",

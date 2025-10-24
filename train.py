@@ -10,15 +10,15 @@ from parse_config import ConfigParser
 
 # import pred_model.structure.CrowdCNNGRU as module_arch
 
-import pred_model.TGCN.TGCN as module_arch
-from trainer import TGCNTrainer as Trainer
+# import pred_model.TGCN.TGCN as module_arch
+# from trainer import TGCNTrainer as Trainer
 
 # import pred_model.AGCRN.AGCRN as module_arch
 # from trainer import AGCRNTrainer as Trainer
 
 
-# import pred_model.A3TGCN.A3TGCN as module_arch
-# from trainer import A3TGCNTrainer as Trainer
+import pred_model.A3TGCN.A3TGCN as module_arch
+from trainer import A3TGCNTrainer as Trainer
 
 from utils import prepare_device
 
@@ -67,7 +67,7 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default= "config/train/TGCN.jsonc", type=str,
+    args.add_argument('-c', '--config', default= "config/train/A3TGCN.jsonc", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')

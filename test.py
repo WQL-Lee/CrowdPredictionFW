@@ -7,19 +7,30 @@ import os
 import re
 
 import data_loader.data_loaders as module_data
+
 # import pred_model.structure.CrowdCNNGRU as module_arch
-import pred_model.TGCN.TGCN as module_arch
-# import pred_model.A3TGCN.A3TGCN as module_arch
+
+# import pred_model.TGCN.TGCN as module_arch
+from trainer.TGCNTrainer import TGCNTrainer
+
+import pred_model.A3TGCN.A3TGCN as module_arch
+from trainer.A3TGCNTrainer import A3TGCNTrainer
+
 # import pred_model.AGCRN.AGCRN as module_arch
+from trainer.AGCRNTrainer import AGCRNTrainer
+
 import pred_model.loss as module_loss
 import pred_model.metric as module_metric
 from parse_config import ConfigParser
 
-from trainer.AGCRNTrainer import AGCRNTrainer
-from trainer.A3TGCNTrainer import A3TGCNTrainer
-from trainer.TGCNTrainer import TGCNTrainer
 
 from utils.math import z_inverse
+
+import torch.serialization
+from parse_config import ConfigParser  # 确保能导入该类
+
+# 将 ConfigParser 加入安全全局列表
+torch.serialization.add_safe_globals([ConfigParser])
 
 class Testor:
     def __init__(self, model_name, model_arch, model_path, saved_dir, logger, data_loader,loss_fn, metric_fns, device, n_gpu=1):
@@ -42,7 +53,7 @@ class Testor:
     @staticmethod
     def load_model(model_path, model_arch):
         model = model_arch
-        checkpoint = torch.load(model_path)
+        checkpoint = torch.load(model_path, weights_only=False)
         state_dict = checkpoint['state_dict']
         model.load_state_dict(state_dict)
         return model
@@ -157,7 +168,7 @@ def main(config):
 
 if __name__ == '__main__':
     args = argparse.ArgumentParser(description='PyTorch Template')
-    args.add_argument('-c', '--config', default="config/test/TGCN.jsonc", type=str,
+    args.add_argument('-c', '--config', default="config/test/A3TGCN.jsonc", type=str,
                       help='config file path (default: None)')
     args.add_argument('-r', '--resume', default=None, type=str,
                       help='path to latest checkpoint (default: None)')
