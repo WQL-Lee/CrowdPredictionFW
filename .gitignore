@@ -22,3 +22,5 @@ vis/*
 debug.py
 preprocess.py
 pyg_test.py
+
+*.pth
