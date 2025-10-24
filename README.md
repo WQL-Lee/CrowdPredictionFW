@@ -177,7 +177,7 @@ python vis.py -c config/vis/TGCN.jsonc
 **数据加载器参数 (data_loader)**
 - `type`: 数据加载器类型，如 "TerminalDataLoader"
 - `args`: 数据加载参数
-  - `data_dir`: 数据目录路径
+  - `data_dir`: 数据目录路径， [已处理的视频与航班信息人群数据集](https://drive.google.com/drive/folders/1mMpVHrdGh2-FFMMfXxiFIZbEtR9u-at3)
   - `batch_size`: 批次大小
   - `n_his`: 历史时间步数
   - `n_pred`: 预测时间步数
